@@ -57,15 +57,37 @@ Si la velocidad del sonido (Vsonido) es de 340 m/s, la fórmula para calcular la
 
 
 El bloque de código dispone de:
-- Una salida Trigger que se conecta a la entrada TRIGGER del sensor.
-- Una entrada ECHO que se conecta a la salida ECHO del sensor.
-- Una salida Out[15:0] de 16 bits por donde se envía al exterior la lectura de los dos contadores de microsegundos.
+
+**Entradas**
+- `clk`: Señal de reloj para sincronizar las operaciones del módulo.
+- `ECHO`: s la señal de eco que se recibe del sensor de ultrasonido, que indica la duración del eco del pulso ultrasónico.
+
+**Salidas**
+-  `Trigger` es la señal de activación que se envía al sensor de ultrasonido para iniciar la medición.
+-  `ECHO` que se conecta a la salida ECHO del sensor.
+-   `Out`: [15:0] de 16 bits por donde se envía al exterior la lectura de los dos contadores de microsegundos.
+- `done`, que envía un TIC cuando el sensor ha terminado de realizar la medición.
 
 
 
 
+#### Infrarojo TCRT5000
 
 
+
+#### LCD I2C
+
+**Entradas**
+1. `clk`: Señal de reloj para sincronizar las operaciones del módulo.
+2. `rst`: Señal de reinicio para restablecer el estado del módulo.
+3. `sda`: Línea de datos de la interfaz I2C.
+4. `scl`: Línea de reloj de la interfaz I2C.
+5. `data`: Datos a enviar al LCD.
+6. `enable`: Señal de habilitación para iniciar la transmisión de datos al LCD.
+7. `rs`: Señal de selección de registro para el LCD (0 = instrucción, 1 = datos).
+   
+**Salidas**
+1. `busy`: Indica si el controlador está ocupado realizando una operación.
 
 
 
