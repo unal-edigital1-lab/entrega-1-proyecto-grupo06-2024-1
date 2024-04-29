@@ -32,9 +32,11 @@ Se implementarán tres sensores para enriquecer la interacción del usuario con 
 
 1. **Codificador Propio (Simulación de Biberón):** Este sensor generará una señal determinada que se sincronizará con el sistema, actuando como un biberón virtual. Cuando el usuario interactúe con este sensor, se modificará el estado del Tamagotchi de "Hambriento", indicando que ha sido alimentado.
 
-2. **Sensor de Ultrasonido:** Utilizado para la detección de proximidad y movimiento. Cuando se detecte proximidad cercana, el Tamagotchi será activado de un estado de Descansar, simulando el despertar por la presencia del usuario.
+1. **Sensor de Ultrasonido:** Utilizado para la detección de proximidad y movimiento. Cuando se detecte proximidad cercana, el Tamagotchi será activado de un estado de Descansar, simulando el despertar por la presencia del usuario.
 
-3. **Sensor Infrarrojo:** Cuando el sensor detecta la presencia de señales infrarrojas, simularía que el usuario está acariciando o interactuando de manera amistosa con el Tamagotchi. Esta interacción podría modificar el estado "Feliz" del Tamagotchi.
+2. **Sensor Infrarrojo:** Cuando el sensor detecta la presencia de señales infrarrojas, simularía que el usuario está acariciando o interactuando de manera amistosa con el Tamagotchi. Esta interacción podría modificar el estado "Feliz" del Tamagotchi.
+   
+3. **Sensor de Humedad:** Se integrará un sensor de humedad. Este sensor medirá los niveles de humedad en el entorno del Tamagotchi. Cuando el usuario interactúe con este sensor, modificando los niveles de humedad, se modificará el estado del Tamagotchi de "Hambriento", indicando que ha sido alimentado.
 
 Estos sensores proporcionarán una experiencia de usuario más inmersiva y dinámica, permitiendo una mayor variedad de interacciones con el Tamagotchi y enriqueciendo la simulación del cuidado de la mascota virtual.
 
@@ -97,4 +99,3 @@ Se incluirá un diagrama para los botones, la pantalla, sensores ( ultrasonido, 
 - Aburrido
 
 
-El proyecto Tamagotchi en FPGA ofrecerá una experiencia interactiva que simula el cuidado de una mascota virtual, aprovechando la capacidad de la FPGA para gestionar estados, interacciones y visualización de manera eficiente.
