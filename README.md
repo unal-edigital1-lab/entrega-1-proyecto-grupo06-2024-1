@@ -46,52 +46,10 @@ Se utilizará un Display LCD de 16x2 basado en el controlador HD44780 para mostr
 ## 4. Arquitectura del Sistema
 
 ### 4.1 Diagramas de Bloques
-Se incluirá un diagrama para los botones, la pantalla, sensores (codificador propio, ultrasonido, infrerrojo) y estados etc.
+Se incluirá un diagrama para los botones, la pantalla, sensores ( ultrasonido, infrerrojo, otro posible sensor) y estados etc.
 
 
-#### Sensor Ultrasonido Hc-sr04
-![Ultrasonido drawio (2)](https://github.com/unal-edigital1-lab/entrega-1-proyecto-grupo06-2024-1/assets/72562179/b4e6ba54-7d82-4770-b263-29dfaa4144e2)
-
-Con este programa enviamos pulsos periódicos de 10 microsegundos por el pin TRIGGER del sensor para activarlo. Una vez activado, el pin ECHO se pone a "1", comenzando a medir el tiempo desde que se envía un tren de 8 pulsos de eco hacia el exterior hasta que dicho tren de ondas de sonido vuelve a llegar al sensor. En ese momento, el pin ECHO vuelve a ponerse a "0". Durante el tiempo en que ECHO está activa en ALTO, dos contadores de 8 bits almacenan el número de microsegundos transcurridos y envían este valor al script en formato decimal y para realizar la conversión a distancia en milímetros.
-
-Si la velocidad del sonido (Vsonido) es de 340 m/s, la fórmula para calcular la distancia (en mm) es: distancia (mm) = 0.17 x tiempo (microsegundos).
-
-
-El bloque de código dispone de:
-
-**Entradas**
-- `clk`: Señal de reloj para sincronizar las operaciones del módulo.
-- `ECHO`: s la señal de eco que se recibe del sensor de ultrasonido, que indica la duración del eco del pulso ultrasónico.
-
-**Salidas**
--  `Trigger` es la señal de activación que se envía al sensor de ultrasonido para iniciar la medición.
--  `ECHO` que se conecta a la salida ECHO del sensor.
--   `Out`: [15:0] de 16 bits por donde se envía al exterior la lectura de los dos contadores de microsegundos.
-- `done`, que envía un TIC cuando el sensor ha terminado de realizar la medición.
-
-
-
-
-#### Infrarojo TCRT5000
-
-![infrarojo drawio](https://github.com/unal-edigital1-lab/entrega-1-proyecto-grupo06-2024-1/assets/72562179/e6000f9b-14be-498e-9adf-20697d704ad1)
-
-
-#### LCD I2C
-![i2c drawio](https://github.com/unal-edigital1-lab/entrega-1-proyecto-grupo06-2024-1/assets/72562179/b52142bd-e4a9-4cbb-a7f8-e5db7029375f)
-
-**Entradas**
-1. `clk`: Señal de reloj para sincronizar las operaciones del módulo.
-2. `rst`: Señal de reinicio para restablecer el estado del módulo.
-3. `sda`: Línea de datos de la interfaz I2C.
-4. `scl`: Línea de reloj de la interfaz I2C.
-5. `data`: Datos a enviar al LCD.
-6. `enable`: Señal de habilitación para iniciar la transmisión de datos al LCD.
-7. `rs`: Señal de selección de registro para el LCD (0 = instrucción, 1 = datos).
-   
-**Salidas**
-1. `busy`: Indica si el controlador está ocupado realizando una operación.
-
+![Uploading Diagrama de bloques dig.drawio.png…]()
 
 
 
