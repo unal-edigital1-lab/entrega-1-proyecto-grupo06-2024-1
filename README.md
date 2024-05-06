@@ -51,7 +51,8 @@ Se utilizará un Display LCD de 16x2 basado en el controlador HD44780 para mostr
 Se incluirá un diagrama para los botones, la pantalla, sensores ( ultrasonido, infrerrojo, otro posible sensor) y estados etc.
 
 
-![Diagrama de bloques dig drawio](https://github.com/unal-edigital1-lab/entrega-1-proyecto-grupo06-2024-1/assets/72562179/af0a6c4e-f5a5-4cf6-98ae-74d7343edf19)
+
+![Diagrama de bloques dig drawio (2)](https://github.com/unal-edigital1-lab/entrega-1-proyecto-grupo06-2024-1/assets/72562179/2be58e31-9ef1-422e-ae50-b1af53211c59)
 
 
 
