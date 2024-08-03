@@ -1,6 +1,14 @@
 # Especificación de Diseño del Proyecto Tamagotchi en FPGA
 
+* Duván Felipe Pacheco Rodriguez
+* Jaime Andrés Martín Moreno
+* Jairo David Luna Díaz
+
 ## 1. Introducción
+El presente informe detalla el diseño e implementación de un sistema de Tamagotchi en una FPGA (Field-Programmable Gate Array), utilizando la FPGA Cyclone IV y el lenguaje de descripción de hardware Verilog. El objetivo del proyecto es emular la experiencia de cuidar una mascota virtual, integrando una lógica de estados que refleje sus necesidades y condiciones, así como mecanismos de interacción a través de botones físicos y sensores. Este enfoque permite explorar la programación y el diseño de sistemas digitales en un entorno práctico y dinámico, proporcionando una base sólida para comprender los principios de la electrónica digital y el diseño de hardware.
+
+El sistema de Tamagotchi incluye varias funcionalidades clave, como el monitoreo de niveles de hambre y felicidad, la detección de proximidad mediante un sensor de ultrasonido, y la activación de estados de descanso a través de un sensor infrarrojo. Estas características aseguran una interacción realista y envolvente con el usuario, fomentando una experiencia de usuario enriquecedora. Además, se emplea una pantalla LCD 20x4 para la visualización del estado actual del Tamagotchi, mostrando información detallada y expresiones faciales que reflejan su estado emocional. A lo largo del informe se presentan la especificación de los componentes del proyecto, la arquitectura del sistema.
+
 
 ### 1.1 Objetivo
 El objetivo del proyecto es desarrollar un sistema de Tamagotchi en FPGA (Field-Programmable Gate Array) que simule el cuidado de una mascota virtual. Esto se logrará mediante una lógica de estados que refleje las necesidades y condiciones de la mascota, junto con mecanismos de interacción a través de botones y sensores.
