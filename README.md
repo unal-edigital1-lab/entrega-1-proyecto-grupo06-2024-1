@@ -33,12 +33,26 @@ Se implementarán tres sensores para enriquecer la interacción del usuario con 
 
 1. **Sensor de Ultrasonido:** Utilizado para la detección de proximidad y movimiento. Cuando se detecte proximidad cercana, el Tamagotchi será activado de un estado de Descansar, simulando el despertar por la presencia del usuario.
 
-![Sensor-de-distancia-Ultrasonido-HC-SR04-29](https://github.com/user-attachments/assets/3a458edc-7881-47e1-9489-590a3ce574a6)
+
+<p align="center">
+ 
+<img src="https://github.com/user-attachments/assets/3a458edc-7881-47e1-9489-590a3ce574a6" title="[Sensor de Ultrasonido]" width="600" height="450">
+<div align="center">Sensor de Ultrasonido.</div>
+ 
+</p>
 
 
-2. **Sensor Infrarrojo:** Cuando el sensor detecta la presencia de señales infrarrojas, simularía que el usuario está acariciando o interactuando de manera amistosa con el Tamagotchi. Esta interacción podría modificar el estado "Feliz" del Tamagotchi.
+1. **Sensor Infrarrojo:** Cuando el sensor detecta la presencia de señales infrarrojas, simularía que el usuario está acariciando o interactuando de manera amistosa con el Tamagotchi. Esta interacción podría modificar el estado "Feliz" del Tamagotchi.
 
- ![images](https://github.com/user-attachments/assets/b2f5df48-0b7d-4c47-bbfe-c58a38a07ec0)
+
+
+
+<p align="center">
+ 
+<img src="https://github.com/user-attachments/assets/b2f5df48-0b7d-4c47-bbfe-c58a38a07ec0" title="[Infrarrojo]" width="600" height="450">
+<div align="center">Sensor Infrarrojo.</div>
+ 
+</p>
 
 
 Estos sensores proporcionarán una experiencia de usuario más inmersiva y dinámica, permitiendo una mayor variedad de interacciones con el Tamagotchi y enriqueciendo la simulación del cuidado de la mascota virtual.
@@ -52,13 +66,19 @@ Se utilizará una pantalla LCD de 20x4 basada en el controlador HD44780 para mos
 ![images (1)](https://github.com/user-attachments/assets/6cfd2368-ccab-46f5-a52e-c1f6bd197a02)
 
 
+<p align="center">
+ 
+<img src="https://github.com/user-attachments/assets/6cfd2368-ccab-46f5-a52e-c1f6bd197a02" title="[pantalla LCD de 20x4]" width="600" height="450">
+<div align="center">Pantalla LCD de 20x4.</div>
+ 
+</p>
+
+
 ## 4. Arquitectura del Sistema
 
 ### 4.1 Diagramas de Bloques
 Se incluirá un diagrama general para los botones, la pantalla, sensores ( ultrasonido y Infrarrojo) 
 ![Diagrama de bloques dig drawio (1)](https://github.com/user-attachments/assets/8d51b7ec-5bcd-482a-b93b-e4b28ff2c0fc)
-
-
 
 
 
