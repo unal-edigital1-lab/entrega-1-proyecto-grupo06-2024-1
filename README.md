@@ -24,33 +24,31 @@ El sistema simulará interactivamente el cuidado de una mascota virtual, permiti
 - Test: Activa el modo de prueba.
 - Boton de  alimentar:  Modifica los estados de  hambriento y salud  
 - Boton de  Jugar: Modifica los estados de diversión, descansar y feliz 
-- Acelerador de Tiempo: Permite modificar la velocidad del tiempo en el Tamagotchi.
+
 
 ### 3.2 Sistema de Sensado
 
 Se implementarán tres sensores para enriquecer la interacción del usuario con el Tamagotchi:
 
-1. **Codificador Propio (Simulación de Biberón):** Este sensor generará una señal determinada que se sincronizará con el sistema, actuando como un biberón virtual. Cuando el usuario interactúe con este sensor, se modificará el estado del Tamagotchi de "Hambriento", indicando que ha sido alimentado.
 
 1. **Sensor de Ultrasonido:** Utilizado para la detección de proximidad y movimiento. Cuando se detecte proximidad cercana, el Tamagotchi será activado de un estado de Descansar, simulando el despertar por la presencia del usuario.
 
 2. **Sensor Infrarrojo:** Cuando el sensor detecta la presencia de señales infrarrojas, simularía que el usuario está acariciando o interactuando de manera amistosa con el Tamagotchi. Esta interacción podría modificar el estado "Feliz" del Tamagotchi.
    
-3. **Sensor de Humedad:** Se integrará un sensor de humedad. Este sensor medirá los niveles de humedad en el entorno del Tamagotchi. Cuando el usuario interactúe con este sensor, modificando los niveles de humedad, se modificará el estado del Tamagotchi de "Hambriento", indicando que ha sido alimentado.
 
 Estos sensores proporcionarán una experiencia de usuario más inmersiva y dinámica, permitiendo una mayor variedad de interacciones con el Tamagotchi y enriqueciendo la simulación del cuidado de la mascota virtual.
 
 
 
 ### 3.3 Sistema de Visualización
-Se utilizará un Display LCD de 16x2 basado en el controlador HD44780 para mostrar información detallada sobre el estado actual del Tamagotchi, como texto descriptivo y mensajes de estado. Además, se aprovecharán los display de 7 segmentos incorporados en la FPGA para mostrar niveles específicos, como el nivel de hambre o felicidad, complementando la visualización principal del LCD.
+Se utilizará una pantalla LCD de 20x4 basada en el controlador HD44780 para mostrar información detallada sobre el estado actual del Tamagotchi, incluyendo texto descriptivo y mensajes de estado. Además, esta misma pantalla se aprovechará para representar gráficamente las expresiones faciales del Tamagotchi, reflejando su estado de ánimo.
+
+
 
 ## 4. Arquitectura del Sistema
 
 ### 4.1 Diagramas de Bloques
-Se incluirá un diagrama para los botones, la pantalla, sensores ( ultrasonido, infrerrojo, otro posible sensor) y estados etc.
-
-
+Se incluirá un diagrama general para los botones, la pantalla, sensores ( ultrasonido y Infrarrojo) 
 
 ![Diagrama de bloques dig drawio (2)](https://github.com/unal-edigital1-lab/entrega-1-proyecto-grupo06-2024-1/assets/72562179/2be58e31-9ef1-422e-ae50-b1af53211c59)
 
@@ -60,9 +58,10 @@ Se incluirá un diagrama para los botones, la pantalla, sensores ( ultrasonido, 
 
 ### 4.2 Descripción de Componentes
 - FPGA: Corazón del sistema que ejecuta la lógica del Tamagotchi.
-- Pantalla: Muestra el estado actual del Tamagotchi.
+- Pantalla LCD 20x4: Muestra el estado actual del Tamagotchi.
 - Botones: Permiten al usuario interactuar con la mascota.
-- Sensor: Detecta estímulos externos para modificar el comportamiento del Tamagotchi.
+- Sensor Ultrasonido e Infrarrojo: Detecta estímulos externos para modificar el comportamiento del Tamagotchi.
+
 
 ### 4.3 Interfaces
 - Comunicación entre la FPGA y la pantalla.
@@ -90,13 +89,83 @@ Se incluirá un diagrama para los botones, la pantalla, sensores ( ultrasonido, 
 
 ### 5.2 Estados 
 
-#### 5.2.1 Estados Mínimos
-- Hambriento
-- Diversión
-- Descansar
-- Salud
-- Feliz
-- Triste
-- Aburrido
+#### 5.2.1 Estados 
 
+- **Hambriento:** Representa el estado del Tamagotchi cuando tiene hambre.
+- **Diversión:**  Representa el estado en el que el Tamagotchi está siendo entretenido.
+- **Descansar:**  Representa cuando el Tamagotchi se está tomando un descanso.
+- **Salud:**  Indica un estado saludable basado en una combinación de NH y NF.
+- **Feliz:**  Representa cuando el Tamagotchi está completamente feliz.
+- **Triste:**  Representa un estado de tristeza.
+
+
+#### 5.2.2 Sistema de Niveles o Puntos:
+Para crear un sistema de niveles o puntuación que refleje la calidad del cuidado proporcionado al Tamagotchi, podemos definir una serie de estados y niveles asociados a los parámetros de hambre y felicidad. Cada parámetro fluctuará en una escala del 1 al 5, donde 1 representa una necesidad urgente de atención y 5 representa un estado óptimo. A continuación, se detallan las reglas para gestionar estos estados y niveles.
+
+##### Sistema de Niveles y Estados:
+
+###### Niveles
+- **Nivel de Hambre (NH):** 1 a 5
+- **Nivel de Felicidad (NF):** 1 a 5
+- **x**: Distancia del ultrasonido en cm
+
+
+###### Estados
+- **Hambriento:** NH = 1
+- **Diversión:** NF ≥ 4 y infrarrojo = 1
+- **Descansar:** Si x > 100 cm y infrarrojo = 1 y activado por tiempo sin interacción.
+- **Salud:** Derivado de una combinación de NH y NF.
+- **Feliz:** NF = 5 y NH ≥ 3 y Si x  < 100
+- **Triste:** NF ≤ 2 o NH = 1
+
+###### Reglas de Transición de Estados
+
+1. **Hambriento:**
+   - Permanece en Hambriento si NH == 1.
+   - Cambia a Salud si NH >= 3 y NF >= 3.
+   - Cambia a Feliz si NF == 5 y NH >= 3 y x < 100.
+   - Cambia a Triste si NF <= 2 o NH == 1.
+   - Cambia a Diversion si NF >= 4 y infrarrojo == 1 y NH >= 2.
+  
+  
+2. **Diversión:**
+   - Permanece en Diversion si NF >= 4 y infrarrojo == 1 y NH >= 2.
+   - Cambia a Feliz si NF == 5 y NH >= 3 y x < 100.
+   - Cambia a Triste si NF <= 2 o NH == 1.
+   - Cambia a Salud si NH >= 3 y NF >= 3.
+   - Cambia a Hambriento si NH == 1.
+  
+3. **Descansar:**
+   - Permanece en Descansar si x > 100 y infrarrojo == 1 y no_interaccion.
+   - Cambia a Hambriento si NH == 1.
+   - Cambia a Triste si NF <= 2 o NH == 1.
+   - Cambia a Diversion si NF >= 4 y infrarrojo == 1 y NH >= 2.
+   - Cambia a Salud si NH >= 3 y NF >= 3.
+   - Cambia a Feliz si NF == 5 y NH >= 3 y x < 100.
+
+4. **Salud:**
+   - Permanece en Salud si NH >= 3 y NF >= 3.
+   - Cambia a Hambriento si NH == 1.
+   - Cambia a Triste si NF <= 2 o NH == 1.
+   - Cambia a Diversion si NF >= 4 y infrarrojo == 1 y NH >= 2.
+   - Cambia a Feliz si NF == 5 y NH >= 3 y x < 100.Cambia a Descansar si x > 100 y infrarrojo == 1 y no_interaccion.
+
+5. **Feliz:**
+   - Permanece en Feliz si NF == 5 y NH >= 3 y x < 100.
+   - Cambia a Hambriento si NH == 1.
+   - Cambia a Triste si NF <= 2 o NH == 1.
+   - Cambia a Diversion si NF >= 4 y infrarrojo == 1 y NH >= 2.
+   - Cambia a Salud si NH >= 3 y NF >= 3.
+   - Cambia a Descansar si x > 100 y infrarrojo == 1 y no_interaccion.
+  
+6. **Triste:**
+   - Permanece en Triste si NF <= 2 o NH == 1.
+   - Cambia a Hambriento si NH == 1.
+   - Cambia a Diversion si NF >= 4 y infrarrojo == 1 y NH >= 2.
+   - Cambia a Salud si NH >= 3 y NF >= 3.
+   - Cambia a Feliz si NF == 5 y NH >= 3 y x < 100.
+   - Cambia a Descansar si x > 100 y infrarrojo == 1 y no_interaccion.
+
+
+###### Diagrama máquina de Estados
 
