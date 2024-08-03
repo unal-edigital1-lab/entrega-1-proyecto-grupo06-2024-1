@@ -73,15 +73,8 @@ Se utilizará una pantalla LCD de 20x4 basada en el controlador HD44780 para mos
 ## 4. Arquitectura del Sistema
 
 ### 4.1 Diagramas de Bloques
-Se incluirá un diagrama general para los botones, la pantalla, sensores ( ultrasonido y Infrarrojo) .
-
-
-<p align="center">
- 
-<img src="(https://github.com/user-attachments/assets/8d51b7ec-5bcd-482a-b93b-e4b28ff2c0fc" title="[Diagramas de Bloques]" width="900" height="900">
-<div align="center">Diagramas de Bloques</div>
- 
-</p>
+Se incluirá un diagrama general para los botones, la pantalla, sensores ( ultrasonido y Infrarrojo). 
+![Diagrama de bloques dig drawio (1)](https://github.com/user-attachments/assets/8d51b7ec-5bcd-482a-b93b-e4b28ff2c0fc)
 
 
 
@@ -198,9 +191,5 @@ Para crear un sistema de niveles o puntuación que refleje la calidad del cuidad
 
 ###### Diagrama máquina de Estados
 
-<p align="center">
- 
-<img src="https://github.com/user-attachments/assets/a701b292-eb6f-418c-9d1b-92b543dc7da1" title="[Diagrama máquina de Estados]" width="900" height="900">
-<div align="center">Diagrama máquina de Estados</div>
- 
-</p>
+![mermaid-ai-diagram-2024-08-03-193602](https://github.com/user-attachments/assets/a701b292-eb6f-418c-9d1b-92b543dc7da1)
+
