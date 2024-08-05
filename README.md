@@ -31,7 +31,8 @@ El sistema simulará interactivamente el cuidado de una mascota virtual, permiti
 - Reset: Reestablece el Tamagotchi a un estado inicial conocido.
 - Test: Activa el modo de prueba.
 - Boton de  alimentar:  Modifica los estados de  hambriento y salud  
-- Boton de  Jugar: Modifica los estados de diversión, descansar y feliz 
+- Boton de  Jugar: Modifica los estados de diversión, descansar y feliz
+- Boton Acelerar tiempo.
 
 
 ### 3.2 Sistema de Sensado
