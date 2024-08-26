@@ -191,7 +191,33 @@ A continuación, se detallan las reglas para gestionar estos estados y niveles.
 
 
 #### 5.2.3 Control
-   
+
+Hay dos modulos independientes que transforman las lecturas de los sensores a entradas binarias para que la maquina de estados actue
+
+El del sensor de ultrasonido transforma la distancia en un bit de salida de acuerdo a lo que se implemente
+ACA LA IDEA MIA ES QUE SEA 1 SI SE CUMPLE UN PATRON, ESTILO ALEJAR Y ACERCAR LA MANO SIMULANDO GOLPECITOS TIERNOS  O ALGO ASI; O SI NO HAY TIEMPO SOLO QUE DETECTE 1 SI ESTA A UNA DISTANCA CERCANA
+
+El del sensor de sonido si detecta un umbral de ruido , tiene una salida de 1 
+
+
+Por otro lado, la maquina de control funciona de esta forma:
+
+1. **Hambriento:**
+   - Si Food == 1 por 10 segundos, NH += 1
+   - Transcurridos 30 minutos, NH -= 1 ya que le da hambre con el tiempo
+  
+2. **Salud:**
+  - Si Sting == 1 por 3 segundos, NS += 1
+  - Transcurridos 60 minutos, NS -= 1 ya que xd, se enferma si no se cuida con el tiempo
+  
+3. **Diversión:**
+  - Si d == 1 por 30 segundos, NF += 1 aunque solo podra hacer esto 2 veces, solo se puede incrementar NF por esta via dos veces
+  - Si sound == 1 por 150 segundos, NF += 1 aunque solo podra hacer esto 2 veces, solo se puede incrementar NF por esta via dos veces
+  - Transcurridos 15 minutos, NF -= 1 ya que le da hambre con el tiempo
+
+4. **Energia:**
+  - Si d o sound se usan mas de 30 segundos, NE -=1 ya que al jugar con el, se cansa
+  - Transcurridos 15 minutos, NE += 1 ya que al no hacer nada, descansa y se restaura la energia
 
 
 
