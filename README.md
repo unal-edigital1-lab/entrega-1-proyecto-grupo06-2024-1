@@ -171,32 +171,34 @@ A continuación, se detallan las reglas para gestionar estos estados y niveles.
 ###### Reglas de Transición de Estados
 
 1. **Hambriento:**
-   - Permanece en Hambriento si NH == 1.
-   - Cambia a Salud si NH >= 3 y NF >= 3.
-   - Cambia a Feliz si NF == 5 y NH >= 3 y x < 100.
-   - Cambia a Triste si NF <= 2 o NH == 1.
-   - Cambia a Diversion si NF >= 4 y infrarrojo == 1 y NH >= 2.
+   - Permanece en Hambriento si NH <= 2.
+   - Sale del estado Hambriento si NH >= 3 (en teoria llega a un estado lleno y evalua el estado de salud)
   
+2. **Salud:**
+  - Permanece en Enfermo si NS <= 1.
+  - Sale del estado Enfermo si NS >= 2 (en teoria llega a un estado sano y evalua el estado de diversion)
   
-2. **Diversión:**
-  
-3. **Descansar:**
+3. **Diversión:**
+  - Permanece en Aburrido si NF <= 2.
+  - Sale del estado Aburrido si NF >= 3 (en teoria llega a un estado de entretenido y evalua el estado de energia)
+
+4. **Energia:**
+  - Permanece en Cansado si NE <= 2.
+  - Sale del estado Cansado si NE >= 3 (en teoria llega a un estado de entretenido y estaria en estado Feliz)
+   
+6. **Feliz:**
+   - Es el mejor estado en que puede estar, no tiene hambre , ni enfermo, ni anda aburrido y anda con buena energia, asi que anda muy feliz porque anda saciado y agradecido al dueño
+
+
+#### 5.2.3 Control
    
 
-4. **Salud:**
-   
-
-5. **Feliz:**
-   
-  
-6. **Triste:**
-  
 
 
 ###### Diagrama máquina de Estados
 
 ![mermaid-ai-diagram-2024-08-03-193602](https://github.com/user-attachments/assets/a701b292-eb6f-418c-9d1b-92b543dc7da1)
-
+TOCA CORREGIR ESTO
 
 
 ### 6.Plan de trabajo.
