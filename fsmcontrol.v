@@ -15,7 +15,7 @@ module fsmcontrol (
     reg [5:0] second_counter;
     reg [5:0] minute_counter;
 
-    // Timer logic
+    // Timer
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             second_counter <= 0;
@@ -45,7 +45,7 @@ module fsmcontrol (
 
     // Control of NH
     reg [3:0] food_timer;
-    reg food_incremented; // Flag to prevent multiple increments in rapid succession
+    reg food_incremented; // Esto esta para evitar incrementos repentinos 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             NH <= 3'd1;
@@ -55,15 +55,15 @@ module fsmcontrol (
             if (food) begin
                 if (food_timer < 10) begin
                     food_timer <= food_timer + 1;
-                    food_incremented <= 0; // Reset increment flag while counting
+                    food_incremented <= 0; // resetea la bandera
                 end else if (!food_incremented) begin
                     food_timer <= 0;
                     NH <= (NH < 5) ? NH + 1 : NH;
-                    food_incremented <= 1; // Set increment flag to prevent multiple increments
+                    food_incremented <= 1; // Evita multiples incrementos
                 end
             end else begin
                 food_timer <= 0;
-                food_incremented <= 0; // Reset flag when food signal is low
+                food_incremented <= 0; // Evita acumular la bandera
             end
 
             if (minute_counter == 30)
@@ -73,7 +73,7 @@ module fsmcontrol (
 
     // Control of NS
     reg [1:0] sting_timer;
-    reg sting_incremented; // Flag to prevent multiple increments in rapid succession
+    reg sting_incremented; 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             NS <= 3'd1;
@@ -83,15 +83,15 @@ module fsmcontrol (
             if (sting) begin
                 if (sting_timer < 3) begin
                     sting_timer <= sting_timer + 1;
-                    sting_incremented <= 0; // Reset increment flag while counting
+                    sting_incremented <= 0; 
                 end else if (!sting_incremented) begin
                     sting_timer <= 0;
                     NS <= (NS < 5) ? NS + 1 : NS;
-                    sting_incremented <= 1; // Set increment flag to prevent multiple increments
+                    sting_incremented <= 1; 
                 end
             end else begin
                 sting_timer <= 0;
-                sting_incremented <= 0; // Reset flag when sting signal is low
+                sting_incremented <= 0; 
             end
 
             if (minute_counter == 60)
@@ -102,7 +102,7 @@ module fsmcontrol (
     // Control of NF
     reg [5:0] d_timer, sound_timer;
     reg [1:0] d_increment, sound_increment;
-    reg d_incremented, sound_incremented; // Flags to prevent multiple increments
+    reg d_incremented, sound_incremented; 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             NF <= 3'd1;
@@ -117,32 +117,32 @@ module fsmcontrol (
             if (d && d_increment < 2) begin
                 if (d_timer < 30) begin
                     d_timer <= d_timer + 1;
-                    d_incremented <= 0; // Reset increment flag while counting
+                    d_incremented <= 0; 
                 end else if (!d_incremented) begin
                     d_timer <= 0;
                     d_increment <= d_increment + 1;
                     NF <= (NF < 5) ? NF + 1 : NF;
-                    d_incremented <= 1; // Set increment flag to prevent multiple increments
+                    d_incremented <= 1; 
                 end
             end else begin
                 d_timer <= 0;
-                d_incremented <= 0; // Reset flag when d signal is low
+                d_incremented <= 0; 
             end
 
             // Sound Timer
             if (sound && sound_increment < 2) begin
                 if (sound_timer < 15) begin
                     sound_timer <= sound_timer + 1;
-                    sound_incremented <= 0; // Reset increment flag while counting
+                    sound_incremented <= 0;
                 end else if (!sound_incremented) begin
                     sound_timer <= 0;
                     sound_increment <= sound_increment + 1;
                     NF <= (NF < 5) ? NF + 1 : NF;
-                    sound_incremented <= 1; // Set increment flag to prevent multiple increments
+                    sound_incremented <= 1; 
                 end
             end else begin
                 sound_timer <= 0;
-                sound_incremented <= 0; // Reset flag when sound signal is low
+                sound_incremented <= 0; 
             end
 
             if (minute_counter == 15)
@@ -152,14 +152,14 @@ module fsmcontrol (
 
     // Control of NE
     reg [5:0] ne_timer;
-    reg ne_incremented; // Flag to indicate if NE has already been incremented at minute 15
+    reg ne_incremented;
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             NE <= 3'd1;
             ne_timer <= 0;
-            ne_incremented <= 0; // Reset the increment flag
+            ne_incremented <= 0; 
         end else begin
-            // Decrease NE when D or Sound is held for more than 30 seconds
+            
             if ((d || sound) && ne_timer >= 30) begin
                 NE <= (NE > 1) ? NE - 1 : NE;
             end else if (d || sound)
@@ -167,12 +167,12 @@ module fsmcontrol (
             else
                 ne_timer <= 0;
 
-            // Increase NE once at minute 15
+            
             if (minute_counter == 15 && !ne_incremented) begin
                 NE <= (NE < 5) ? NE + 1 : NE;
-                ne_incremented <= 1; // Set the flag to indicate NE has been incremented
+                ne_incremented <= 1;
             end else if (minute_counter != 15) begin
-                ne_incremented <= 0; // Reset the flag when minute_counter is not 15
+                ne_incremented <= 0; 
             end
         end
     end
