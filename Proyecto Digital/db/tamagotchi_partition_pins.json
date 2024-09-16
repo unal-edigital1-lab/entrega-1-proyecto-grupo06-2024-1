@@ -1,0 +1,125 @@
+{
+	"partitions" : [
+		{
+			"name" : "Top",
+			"pins" : [
+				{
+					"name" : "nivel_hambre[0]",
+					"strict" : false
+				},
+				{
+					"name" : "nivel_hambre[1]",
+					"strict" : false
+				},
+				{
+					"name" : "nivel_hambre[2]",
+					"strict" : false
+				},
+				{
+					"name" : "nivel_diversion[0]",
+					"strict" : false
+				},
+				{
+					"name" : "nivel_diversion[1]",
+					"strict" : false
+				},
+				{
+					"name" : "nivel_diversion[2]",
+					"strict" : false
+				},
+				{
+					"name" : "estado_tamagotchi[0]",
+					"strict" : false
+				},
+				{
+					"name" : "estado_tamagotchi[1]",
+					"strict" : false
+				},
+				{
+					"name" : "estado_tamagotchi[2]",
+					"strict" : false
+				},
+				{
+					"name" : "trigger_ultrasonido",
+					"strict" : false
+				},
+				{
+					"name" : "rs_lcd",
+					"strict" : false
+				},
+				{
+					"name" : "enable_lcd",
+					"strict" : false
+				},
+				{
+					"name" : "data_lcd[0]",
+					"strict" : false
+				},
+				{
+					"name" : "data_lcd[1]",
+					"strict" : false
+				},
+				{
+					"name" : "data_lcd[2]",
+					"strict" : false
+				},
+				{
+					"name" : "data_lcd[3]",
+					"strict" : false
+				},
+				{
+					"name" : "data_lcd[4]",
+					"strict" : false
+				},
+				{
+					"name" : "data_lcd[5]",
+					"strict" : false
+				},
+				{
+					"name" : "data_lcd[6]",
+					"strict" : false
+				},
+				{
+					"name" : "data_lcd[7]",
+					"strict" : false
+				},
+				{
+					"name" : "ruido_detectado",
+					"strict" : false
+				},
+				{
+					"name" : "object_detected",
+					"strict" : false
+				},
+				{
+					"name" : "clk",
+					"strict" : false
+				},
+				{
+					"name" : "reset_n",
+					"strict" : false
+				},
+				{
+					"name" : "ruido_input",
+					"strict" : false
+				},
+				{
+					"name" : "ultrasonido_ech",
+					"strict" : false
+				},
+				{
+					"name" : "test_n",
+					"strict" : false
+				},
+				{
+					"name" : "alimentar_n",
+					"strict" : false
+				},
+				{
+					"name" : "jugar_n",
+					"strict" : false
+				}
+			]
+		}
+	]
+}
