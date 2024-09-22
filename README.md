@@ -58,12 +58,9 @@ Se implementarán tres sensores para enriquecer la interacción del usuario con 
 1. 2. **Sensor de Sonido**: Utilizado para la deteccion de algun ruido y asi verificar la presencia del cuidador de modo que nuestro compañero asi no nos entienda, sepa que tiene a alguien presente
 
 
-TOCA CAMBIAR LA FOTO XD
 
-<p align="center">
- 
 
-</p>
+
 
 
 Estos sensores proporcionarán una experiencia de usuario más inmersiva y dinámica, permitiendo una mayor variedad de interacciones con el Tamagotchi y enriqueciendo la simulación del cuidado de la mascota virtual.
@@ -87,7 +84,7 @@ Se utilizará una pantalla LCD de 2004 basada en el controlador HD44780 para mos
 Se incluirá un diagrama general para los botones, la pantalla, sensores ( ultrasonido y Infrarrojo). 
 ![Diagrama de bloques dig drawio (1)](https://github.com/user-attachments/assets/8d51b7ec-5bcd-482a-b93b-e4b28ff2c0fc)
 
-TOCA CORREGIR ESTO
+
 
 
 ### 4.2 Descripción de Componentes
@@ -136,47 +133,125 @@ A continuación, se detallan las reglas para gestionar estos estados y niveles.
 - **Nivel de Hambre (NH):** 1 a 5
 - **Nivel de Diversion (ND):** 1 a 5
 
-###### Reglas de Transición de Estados
+###### Reglas de transición de estados
 
-###### Estados
-- **Neutro** else neutro
-- **Feliz** NH <= 2 && ND >= 4
-- **Triste** ND <= 2 || NH >= 4
-- **Cansado** UltraSonido == 0 || Ruido == 0
-- **Hambriento** NH >= 4
-- **Muerto** NH == 5 && ND == 1
+La una máquina de estados que controla el comportamiento de un tamagotchi basado en los niveles de hambre, diversión, y sensores (ultrasonido y ruido). Los estados están definidos en 3 bits, con las siguientes transiciones:
+
+1. **Estado inicial:**
+   - Al iniciar (reset), el estado es `NEUTRO`.
+
+2. **Modo Test:**
+   - Si el botón de test (`test_n`) está presionado durante más de 5 segundos, la máquina entra en "modo test". En este modo, la máquina de estados sigue una secuencia fija:
+     - `NEUTRO` → `FELIZ` → `TRISTE` → `CANSADO` → `HAMBRIENTO` → `MUERTO` → `NEUTRO`.
+
+3. **Transiciones normales:**
+   - Las transiciones dependen de los niveles de hambre, diversión y los sensores de ultrasonido y ruido. 
+
+##### Reglas de transición por estado:
+
+1. **NEUTRO:**
+   - Si el nivel de **hambre** es mayor o igual a 4 → **HAMBRIENTO**.
+   - Si el nivel de **diversión** es mayor o igual a 4 y el hambre es menor o igual a 2 → **FELIZ**.
+   - Si el nivel de **diversión** es menor o igual a 2 o el hambre es mayor o igual a 4 → **TRISTE**.
+   - Si alguno de los sensores (ultrasonido o ruido) detecta presencia o ruido → **CANSADO**.
+   - Si ninguna de las condiciones anteriores se cumple → permanece en **NEUTRO**.
+
+2. **FELIZ:**
+   - Si el nivel de **hambre** es mayor o igual a 3 o la **diversión** baja de 4 → **NEUTRO**.
+   - Si ninguna de estas condiciones se cumple → permanece en **FELIZ**.
+
+3. **TRISTE:**
+   - Si el nivel de **hambre** es menor a 4 y la **diversión** es mayor a 2 → **NEUTRO**.
+   - Si no se cumplen las condiciones → permanece en **TRISTE**.
+
+4. **CANSADO:**
+   - Si los sensores de **ultrasonido** y **ruido** no detectan presencia ni ruido → **NEUTRO**.
+   - Si el nivel de **hambre** es 5 y la **diversión** es 1 → **MUERTO**.
+   - Si ninguna de las condiciones anteriores se cumple → permanece en **CANSADO**.
+
+5. **HAMBRIENTO:**
+   - Si el nivel de **hambre** es menor a 4 → **NEUTRO**.
+   - Si el nivel de **hambre** es 5 y la **diversión** es 1 → **MUERTO**.
+   - Si ninguna de estas condiciones se cumple → permanece en **HAMBRIENTO**.
+
+6. **MUERTO:**
+   - Permanece en **MUERTO**, no hay retorno desde este estado.
+
+### Tabla de Estados y Transiciones
+
+| Estado Actual | Condición para Cambiar             | Estado Siguiente |
+|---------------|------------------------------------|------------------|
+| **NEUTRO**    | Hambre >= 4                        | HAMBRIENTO       |
+|               | Diversión >= 4, Hambre <= 2        | FELIZ            |
+|               | Diversión <= 2 o Hambre >= 4       | TRISTE           |
+|               | Ultrasonido o Ruido activado       | CANSADO          |
+|               | Ninguna                            | NEUTRO           |
+| **FELIZ**     | Hambre >= 3 o Diversión < 4        | NEUTRO           |
+|               | Ninguna                            | FELIZ            |
+| **TRISTE**    | Hambre < 4 y Diversión > 2         | NEUTRO           |
+|               | Ninguna                            | TRISTE           |
+| **CANSADO**   | Ultrasonido y Ruido desactivados   | NEUTRO           |
+|               | Hambre == 5 y Diversión == 1       | MUERTO           |
+|               | Ninguna                            | CANSADO          |
+| **HAMBRIENTO**| Hambre < 4                         | NEUTRO           |
+|               | Hambre == 5 y Diversión == 1       | MUERTO           |
+|               | Ninguna                            | HAMBRIENTO       |
+| **MUERTO**    | Ninguna                            | MUERTO           |
+
   
 
 
 
 #### 5.2.3 Control de Niveles
 
-Hay dos modulos independientes que transforman las lecturas de los sensores a entradas binarias para que la maquina de estados actue
+El módulo `niveles` simula la dinámica de un tamagotchi, controlando dos aspectos clave: **hambre** y **diversión**, ambos representados con valores entre 1 y 5. Estos niveles cambian dependiendo de la interacción del usuario y el paso del tiempo.
 
-El del sensor de ultrasonido transforma la distancia en un bit de salida de acuerdo a lo que se implemente
-ACA LA IDEA MIA ES QUE SEA 1 SI SE CUMPLE UN PATRON, ESTILO ALEJAR Y ACERCAR LA MANO SIMULANDO GOLPECITOS TIERNOS  O ALGO ASI; O SI NO HAY TIEMPO SOLO QUE DETECTE 1 SI ESTA A UNA DISTANCA CERCANA
+### Concepto básico:
 
-El del sensor de sonido si detecta un umbral de ruido , tiene una salida de 1 
+1. **Interacción del usuario:**
+   - El usuario puede **alimentar** o **jugar** con el tamagotchi usando botones.
+   - Cada vez que el usuario presiona el botón de **alimentar**, el nivel de hambre disminuye (si es mayor que 1), lo que representa que el tamagotchi está menos hambriento.
+   - Si el usuario presiona el botón de **jugar**, el nivel de diversión aumenta (si es menor que 5), indicando que el tamagotchi está más entretenido.
 
+2. **Efecto del tiempo:**
+   - El tiempo se mide en minutos, utilizando un contador que genera una señal cada minuto.
+   - Con el paso del tiempo, el **nivel de hambre aumenta** gradualmente (hasta un máximo de 5), lo que simula que el tamagotchi se va poniendo más hambriento si no se alimenta.
+   - Al mismo tiempo, el **nivel de diversión disminuye** (hasta un mínimo de 1), lo que refleja que el tamagotchi se aburre si no juegan con él.
 
-Por otro lado, la maquina de control de niveles (niveles.v) funciona de esta forma:
+### Detalles técnicos:
 
-1. **Hambriento:**
-   - Si Alimentar  == 1 (No incluye la logica negada) , NH -= 1
-   - Transcurridos 1 minutos, NH += 1 ya que le da hambre con el tiempo
+- **Antirrebote de botones:** Se usa una técnica de filtrado (antirrebote) para evitar que señales no deseadas de los botones afecten los niveles. Esto asegura que cada interacción con los botones sea estable y no cause fluctuaciones erráticas.
 
+- **Botones:**
+  - `alimentar`: Reduce el nivel de hambre.
+  - `jugar`: Aumenta el nivel de diversión.
+  - `reset`: Reinicia los niveles a sus valores iniciales (hambre en 1 y diversión en 5).
+  - `test`: Usado para pruebas, aunque en este módulo no parece tener un uso directo.
+
+- **Inicialización:** Al inicio, el nivel de hambre está en 1 (mínimo) y el nivel de diversión en 5 (máximo). Estos niveles cambian con el tiempo o la interacción del usuario.
+
+### Ciclo de comportamiento:
+
+- **Si no hay interacción:**
+  - Cada minuto que pasa, el **nivel de hambre sube** y el **nivel de diversión baja**.
+
+- **Si hay interacción:**
+  - Si se presiona **alimentar**, el nivel de hambre baja.
+  - Si se presiona **jugar**, el nivel de diversión sube.
   
-2. **Diversión:**
-  - Si jugar  == 1 (No incluye la logica negada), ND += 1
-  - Transcurridos 1 minutos, ND -= 1 ya que se aburre y se siente solito con el tiempo
+### Ejemplo de comportamiento:
 
+- Al inicio, el tamagotchi está **poco hambriento** (nivel de hambre = 1) y **muy entretenido** (nivel de diversión = 5).
+- Si pasa un minuto sin alimentar, el nivel de hambre sube a 2, y la diversión baja a 4.
+- Si el usuario juega con el tamagotchi, la diversión sube a 5 nuevamente.
+- Si se sigue sin alimentar, el hambre sigue subiendo gradualmente hasta un máximo de 5.
 
 
 
 ###### Diagrama máquina de Estados
 
 
-TOCA CORREGIR ESTO
+
 
 
 ### 6.Plan de trabajo.
@@ -205,3 +280,7 @@ TOCA CORREGIR ESTO
 |            |                                                                                                    | - Pruebas finales: realizar pruebas finales para asegurar cumplimiento de requisitos, verificar funcionalidad en escenarios diversos. |
 |            |                                                                                                    | - Preparación del informe final: redactar informe final, incluir detalles de diseño, implementación y pruebas.          |
 |            |                                                                                                    | - Presentación del proyecto: preparar y practicar presentación del proyecto.                                            |
+
+
+
+## Describir modulos
