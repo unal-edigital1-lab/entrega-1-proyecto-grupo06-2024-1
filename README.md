@@ -7,7 +7,7 @@
 ## 1. Introducción
 El presente informe detalla el diseño e implementación de un sistema de Tamagotchi en una FPGA (Field-Programmable Gate Array), utilizando la FPGA Cyclone IV y el lenguaje de descripción de hardware Verilog. El objetivo del proyecto es emular la experiencia de cuidar una mascota virtual, integrando una lógica de estados que refleje sus necesidades y condiciones, así como mecanismos de interacción a través de botones físicos y sensores. Este enfoque permite explorar la programación y el diseño de sistemas digitales en un entorno práctico y dinámico, proporcionando una base sólida para comprender los principios de la electrónica digital y el diseño de hardware.
 
-El sistema de Tamagotchi incluye varios estados, tales como energia, salud, hambre, entretenimiento y un estado de felicidad general, todo esto usando pulsadores, la deteccion de proximidad para marcar una interaccion determinada por patrones o la estimulacion por sonido de modo que altera los estados del Tamagotchi. Estas caracteristicas permiten una interaccion realista con la mascota virtual fomentando una experiencia unica, tan unica que usando una pantalla lcd (xx*x) puede ver con buena definicios las posturas de nuestro querido amigo y tener idea de el estado en que se encuentra por expresiones faciales o emoticonos.
+El sistema de Tamagotchi incluye varios estados, tales como energia, salud, hambre, entretenimiento y un estado de felicidad general usando pulsadores, la deteccion de proximidad para marcar una interaccion determinada o la estimulacion por sonido de modo que altera los estados del Tamagotchi. Estas caracteristicas permiten una interaccion realista con la mascota virtual fomentando una experiencia unica, tan unica que usando una pantalla lcd 20 04  puede ver con buena definicios las posturas de nuestro querido amigo y tener idea de el estado en que se encuentra por expresiones faciales o emoticonos.
 
 
 
@@ -24,16 +24,16 @@ El proyecto se centrará en la creación de un sistema básico de Tamagotchi, qu
 El sistema Tamagotchi en FPGA es concebido como un sistema autónomo destinado a emular la experiencia de mantener y cuidar una mascota virtual. Se fundamenta en el uso de máquinas de estado algorítmico para gestionar las diversas condiciones y comportamientos de la mascota.
 
 ### 2.2 Funcionalidad Principal
-El sistema simulará interactivamente el cuidado de una mascota virtual, permitiendo al usuario participar en actividades esenciales como alimentar, jugar, dormir y curar, a través de una interfaz visual y botones y sensores.
+El sistema simulará interactivamente el cuidado de una mascota virtual, permitiendo al usuario participar en actividades esenciales como alimentar, descansar y jugar a través de una interfaz visual , botones y sensores.
 
 ## 3. Especificaciones del Sistema
 
 ### 3.1 Sistema de Botones
 #### 3.1.1 Botones 
 - Reset: Reestablece el Tamagotchi a un estado inicial conocido.
-- Sting: Este boton permite la curacion del Tatmagochi y restaurar la salud
-- Food: Este boton permite la alimentacion de nuestro amigo
-- Acc: Este boton permite la aceleracion del sistema a 30x, lo que hace que 1 segundo equivalga a 30 segundos
+- Alimentar: Permite subir el nivel de hambre
+- Jugar: Permite subir el nivel de diversion
+  
   
 
 
@@ -62,9 +62,7 @@ TOCA CAMBIAR LA FOTO XD
 
 <p align="center">
  
-<img src="https://github.com/user-attachments/assets/b2f5df48-0b7d-4c47-bbfe-c58a38a07ec0" title="[Infrarrojo]" width="600" height="450">
-<div align="center">Sensor Infrarrojo.</div>
- 
+
 </p>
 
 
@@ -73,7 +71,7 @@ Estos sensores proporcionarán una experiencia de usuario más inmersiva y diná
 
 
 ### 3.3 Sistema de Visualización
-Se utilizará una pantalla LCD de 20x4 basada en el controlador HD44780 para mostrar información detallada sobre el estado actual del Tamagotchi, incluyendo texto descriptivo y mensajes de estado. Además, esta misma pantalla se aprovechará para representar gráficamente las expresiones faciales del Tamagotchi, reflejando su estado de ánimo.
+Se utilizará una pantalla LCD de 2004 basada en el controlador HD44780 para mostrar información detallada sobre el estado actual del Tamagotchi, incluyendo texto descriptivo y mensajes de estado. Además, esta misma pantalla se aprovechará para representar gráficamente las expresiones faciales del Tamagotchi, reflejando su estado de ánimo.
 
 <p align="center">
  
@@ -88,6 +86,7 @@ Se utilizará una pantalla LCD de 20x4 basada en el controlador HD44780 para mos
 ### 4.1 Diagramas de Bloques
 Se incluirá un diagrama general para los botones, la pantalla, sensores ( ultrasonido y Infrarrojo). 
 ![Diagrama de bloques dig drawio (1)](https://github.com/user-attachments/assets/8d51b7ec-5bcd-482a-b93b-e4b28ff2c0fc)
+
 TOCA CORREGIR ESTO
 
 
@@ -105,46 +104,29 @@ TOCA CORREGIR ESTO
 
 ## 5. Especificaciones de Diseño Detalladas
 
-### 5.1 Modos de operación
 
-#### 5.1.1 Modo Test
-- Permite validar la funcionalidad del sistema y sus estados.
-- Activación: Manteniendo pulsado el botón "Test" durante 5 segundos.
-- Funcionalidad: Permite la navegación manual entre los estados del Tamagotchi.
-  NO SE COMO USAR EL TEST; SERIA BUENO POR UNOS PINES DIGITALES ASI COMO CON LA LCD
 
-#### 5.1.2 Modo Normal
-- Modo estándar de operación del Tamagotchi.
-- Activación: Arranca por defecto tras el encendido o reinicio.
-- Funcionalidad: Los usuarios interactúan con la mascota para satisfacer sus necesidades básicas.
+### 5.1 Estados 
 
-#### 5.1.3 Modo Aceleración 
-- Incrementa la velocidad a la que transcurren los eventos y el tiempo.
-- Activación: Pulsando el botón dedicado a "Aceleración de Tiempo".
-- Funcionalidad: Transiciona entre estados a una aceleracion x30 de modo que la mayoria de estados se podran ver en un tiempo menor a 2 minutos
-
-### 5.2 Estados 
-
-#### 5.2.1 Estados 
+#### 5.1.1 Estados basicos
 
 
 
-- **Hambre:** Representa el estado del Tamagotchi cuando tiene hambre y se omite cuando esta lleno.
-- **Salud:**  Representa el estado del Tamagotchi cuando esta enfermo y se omite cuando esta sano.
-- **Diversión:**  Representa el estado del Tamagotchi cuando esta aburrido y se omite cuando esta estimulado y divertido
-- **Descansar:** Representa el estado del Tamagotchi cuando esta cansado de tanto jugar y se omite cuando esta descansado
-- **Feliz:**  Representa cuando el Tamagotchi está completamente feliz, implica que todos los problemas han sido solucionados y nuestro amiguito no puede pedir nada mas para hacer mejor su vida.
+- **Neutro** Inicial
+- **Feliz** Esta Satisfecho
+- **Triste** Si alguno de los dos niveles esta en un estado no optimo (NH o ND)
+- **Cansado** Depende de la presencia de ruido o proximidad
+- **Hambriento** El nivel de hambre es alto
+- **Muerto** Murio de hambre
 
 
 
-#### 5.2.2 Sistema de Niveles o Puntos:
+#### 5.2.2 Sistema de Niveles y Logica de Estados:
 Para crear un sistema de niveles o puntuación que refleje la calidad del cuidado proporcionado al Tamagotchi, podemos definir una serie de estados y niveles asociados a los parámetros de hambre, salud, diversion y descanso. Cada parámetro fluctuará en una escala del 1 al 5, donde:
 
-1 representa una necesidad urgente y critica de atención 
-2 representa una necesidad urgente 
-3 representa un estado aceptable aunque pronto requerira atencion
-4 representa un estado bueno
-5 representa un estado óptimo, no se puede mejorar mas, esta completamente saciado. 
+1 y 5 representa un nivel extremo, sea maximo o minimo
+2 y 4 un nivel critico, sea optimo o no optimo
+3 un nivel intermendio estable
 
 A continuación, se detallan las reglas para gestionar estos estados y niveles.
 
@@ -152,45 +134,22 @@ A continuación, se detallan las reglas para gestionar estos estados y niveles.
 
 ###### Niveles
 - **Nivel de Hambre (NH):** 1 a 5
-- **Nivel de Salud (NS):** 1 a 5
-- **Nivel de Felicidad(Diversion) (NF):** 1 a 5
-- **Nivel de Energia (NE):** 1 a 5
-
-
-###### Estados
-- **Hambriento:** NH <= 2
-- **Lleno:** NH >= 3
-- **Enfermo:** NS ==1
-- **Saludable:** NS >= 2
-- **Aburrido:** NF <= 2
-- **Entretenido:** NF >= 3
-- **Cansado:** NE <= 2
-- **Pleno:** NE >= 3
-- **Feliz:** Implica que como todos son secuenciales, entonces al estar pleno, las demas necesidades han sido saciadas y por ende es el mismo estado a **Pleno** ya que todo esta a un nivel optimo o bueno
+- **Nivel de Diversion (ND):** 1 a 5
 
 ###### Reglas de Transición de Estados
 
-1. **Hambriento:**
-   - Permanece en Hambriento si NH <= 2.
-   - Sale del estado Hambriento si NH >= 3 (en teoria llega a un estado lleno y evalua el estado de salud)
+###### Estados
+- **Neutro** else neutro
+- **Feliz** NH <= 2 && ND >= 4
+- **Triste** ND <= 2 || NH >= 4
+- **Cansado** UltraSonido == 0 || Ruido == 0
+- **Hambriento** NH >= 4
+- **Muerto** NH == 5 && ND == 1
   
-2. **Salud:**
-  - Permanece en Enfermo si NS <= 1.
-  - Sale del estado Enfermo si NS >= 2 (en teoria llega a un estado sano y evalua el estado de diversion)
-  
-3. **Diversión:**
-  - Permanece en Aburrido si NF <= 2.
-  - Sale del estado Aburrido si NF >= 3 (en teoria llega a un estado de entretenido y evalua el estado de energia)
-
-4. **Energia:**
-  - Permanece en Cansado si NE <= 2.
-  - Sale del estado Cansado si NE >= 3 (en teoria llega a un estado de entretenido y estaria en estado Feliz)
-   
-6. **Feliz:**
-   - Es el mejor estado en que puede estar, no tiene hambre , ni enfermo, ni anda aburrido y anda con buena energia, asi que anda muy feliz porque anda saciado y agradecido al dueño
 
 
-#### 5.2.3 Control
+
+#### 5.2.3 Control de Niveles
 
 Hay dos modulos independientes que transforman las lecturas de los sensores a entradas binarias para que la maquina de estados actue
 
@@ -200,30 +159,23 @@ ACA LA IDEA MIA ES QUE SEA 1 SI SE CUMPLE UN PATRON, ESTILO ALEJAR Y ACERCAR LA 
 El del sensor de sonido si detecta un umbral de ruido , tiene una salida de 1 
 
 
-Por otro lado, la maquina de control funciona de esta forma:
+Por otro lado, la maquina de control de niveles (niveles.v) funciona de esta forma:
 
 1. **Hambriento:**
-   - Si Food == 1 por 10 segundos, NH += 1
-   - Transcurridos 30 minutos, NH -= 1 ya que le da hambre con el tiempo
-  
-2. **Salud:**
-  - Si Sting == 1 por 3 segundos, NS += 1
-  - Transcurridos 60 minutos, NS -= 1 ya que xd, se enferma si no se cuida con el tiempo
-  
-3. **Diversión:**
-  - Si d == 1 por 30 segundos, NF += 1 aunque solo podra hacer esto 2 veces, solo se puede incrementar NF por esta via dos veces
-  - Si sound == 1 por 150 segundos, NF += 1 aunque solo podra hacer esto 2 veces, solo se puede incrementar NF por esta via dos veces
-  - Transcurridos 15 minutos, NF -= 1 ya que le da hambre con el tiempo
+   - Si Alimentar  == 1 (No incluye la logica negada) , NH -= 1
+   - Transcurridos 1 minutos, NH += 1 ya que le da hambre con el tiempo
 
-4. **Energia:**
-  - Si d o sound se usan mas de 30 segundos, NE -=1 ya que al jugar con el, se cansa
-  - Transcurridos 15 minutos, NE += 1 ya que al no hacer nada, descansa y se restaura la energia
+  
+2. **Diversión:**
+  - Si jugar  == 1 (No incluye la logica negada), ND += 1
+  - Transcurridos 1 minutos, ND -= 1 ya que se aburre y se siente solito con el tiempo
+
 
 
 
 ###### Diagrama máquina de Estados
 
-![mermaid-ai-diagram-2024-08-03-193602](https://github.com/user-attachments/assets/a701b292-eb6f-418c-9d1b-92b543dc7da1)
+
 TOCA CORREGIR ESTO
 
 
