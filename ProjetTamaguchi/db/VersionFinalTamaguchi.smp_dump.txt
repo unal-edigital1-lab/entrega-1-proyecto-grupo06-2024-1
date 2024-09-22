@@ -1,0 +1,45 @@
+
+State Machine - |top_module|LCD1602_cust_char:lcd_inst|create_char_task
+Name create_char_task.WRITE_LCD create_char_task.SET_CURSOR create_char_task.WRITE_CHARS create_char_task.SET_CGRAM_ADDR 
+create_char_task.SET_CGRAM_ADDR 0 0 0 0 
+create_char_task.WRITE_CHARS 0 0 1 1 
+create_char_task.SET_CURSOR 0 1 0 1 
+create_char_task.WRITE_LCD 1 0 0 1 
+
+State Machine - |top_module|LCD1602_cust_char:lcd_inst|next1
+Name next1.01010 next1.01001 next1.01000 next1.00111 next1.00110 next1.00101 next1.00100 next1.00011 next1.00010 next1.00001 next1.00000 
+next1.00000 0 0 0 0 0 0 0 0 0 0 0 
+next1.00001 0 0 0 0 0 0 0 0 0 1 1 
+next1.00010 0 0 0 0 0 0 0 0 1 0 1 
+next1.00011 0 0 0 0 0 0 0 1 0 0 1 
+next1.00100 0 0 0 0 0 0 1 0 0 0 1 
+next1.00101 0 0 0 0 0 1 0 0 0 0 1 
+next1.00110 0 0 0 0 1 0 0 0 0 0 1 
+next1.00111 0 0 0 1 0 0 0 0 0 0 1 
+next1.01000 0 0 1 0 0 0 0 0 0 0 1 
+next1.01001 0 1 0 0 0 0 0 0 0 0 1 
+next1.01010 1 0 0 0 0 0 0 0 0 0 1 
+
+State Machine - |top_module|LCD1602_cust_char:lcd_inst|current
+Name current.01010 current.01001 current.01000 current.00111 current.00110 current.00101 current.00100 current.00011 current.00010 current.00001 current.00000 
+current.00000 0 0 0 0 0 0 0 0 0 0 0 
+current.00001 0 0 0 0 0 0 0 0 0 1 1 
+current.00010 0 0 0 0 0 0 0 0 1 0 1 
+current.00011 0 0 0 0 0 0 0 1 0 0 1 
+current.00100 0 0 0 0 0 0 1 0 0 0 1 
+current.00101 0 0 0 0 0 1 0 0 0 0 1 
+current.00110 0 0 0 0 1 0 0 0 0 0 1 
+current.00111 0 0 0 1 0 0 0 0 0 0 1 
+current.01000 0 0 1 0 0 0 0 0 0 0 1 
+current.01001 0 1 0 0 0 0 0 0 0 0 1 
+current.01010 1 0 0 0 0 0 0 0 0 0 1 
+
+State Machine - |top_module|LCD1602_cust_char:lcd_inst|fsm_state
+Name fsm_state.WRITE_EXTRA_TEXT fsm_state.SET_CURSOR_AND_WRITE fsm_state.CLEAR_COUNTERS1 fsm_state.CREATE_CHARS fsm_state.CLEAR_COUNTERS0 fsm_state.INIT_CONFIG fsm_state.IDLE 
+fsm_state.IDLE 0 0 0 0 0 0 0 
+fsm_state.INIT_CONFIG 0 0 0 0 0 1 1 
+fsm_state.CLEAR_COUNTERS0 0 0 0 0 1 0 1 
+fsm_state.CREATE_CHARS 0 0 0 1 0 0 1 
+fsm_state.CLEAR_COUNTERS1 0 0 1 0 0 0 1 
+fsm_state.SET_CURSOR_AND_WRITE 0 1 0 0 0 0 1 
+fsm_state.WRITE_EXTRA_TEXT 1 0 0 0 0 0 1 
