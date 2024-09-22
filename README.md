@@ -55,9 +55,10 @@ Se implementarán tres sensores para enriquecer la interacción del usuario con 
 </p>
 
 
-1. 2. **Sensor de Sonido**: Utilizado para la deteccion de algun ruido y asi verificar la presencia del cuidador de modo que nuestro compañero asi no nos entienda, sepa que tiene a alguien presente
+ 2. **Sensor de Sonido**: Utilizado para la deteccion de algun ruido y asi verificar la presencia del cuidador de modo que nuestro compañero asi no nos entienda, sepa que tiene a alguien presente
 
 
+![Módulo-Sensor-de-Sonido-Ruido-Micrófono-KY-037-1](https://github.com/user-attachments/assets/be1f637c-4a96-49f4-ab26-aff26a97b7d5)
 
 
 
@@ -251,6 +252,7 @@ El módulo `niveles` simula la dinámica de un tamagotchi, controlando dos aspec
 ###### Diagrama máquina de Estados
 
 
+![mermaid-ai-diagram-2024-09-22-220132](https://github.com/user-attachments/assets/196ff1fc-933b-4b84-85ec-07aa9e540be4)
 
 
 
