@@ -58,12 +58,14 @@ Se implementarán tres sensores para enriquecer la interacción del usuario con 
  2. **Sensor de Sonido**: Utilizado para la deteccion de algun ruido y asi verificar la presencia del cuidador de modo que nuestro compañero asi no nos entienda, sepa que tiene a alguien presente
 
 
-
- <p align="center">
-<img src="[https://github.com/user-attachments/assets/3a458edc-7881-47e1-9489-590a3ce574a6](https://github.com/user-attachments/assets/be1f637c-4a96-49f4-ab26-aff26a97b7d5)" title="[Sensor de sonido]" width="600" height="450">
-<div align="center">Sensor de Ultrasonido.</div>
+<p align="center">
+ 
+<img src="https://github.com/user-attachments/assets/be1f637c-4a96-49f4-ab26-aff26a97b7d5" title="[Sensor de sonido]" width="600" height="450">
+<div align="center">Sensor de Sonido.</div>
  
 </p>
+
+
 
 
 
