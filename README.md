@@ -298,10 +298,10 @@ Modulo de Ultrasonido
 - Objetivo del codigo: Detectar si el ultrasonido detecta el objeto a una distancia mayor o menor de la indicada en un parametro.
 - Implementacion de codigo: Antes de todo, es necesario recordar que en la Fpga tenemos como parametro una frecuencia fija del reloj, se puede calcular el tiempo de acuerdo a la cantidad de ciclos en un segundo (50 * 10^6).
   Parametros: Parámetros Definidos:
-  CLOCK_FREQ: Frecuencia del reloj en Hz (por defecto, 50 MHz).
-  SOUND_SPEED: Velocidad del sonido en el aire en cm/s (34,300 cm/s).
-  DISTANCE_THRESHOLD: Umbral de distancia para la detección del objeto (10 cm).
-  TIME_THRESHOLD: Tiempo máximo esperado en ciclos de reloj para detectar el retorno del pulso "echo" a la distancia de 10 cm.
+    CLOCK_FREQ: Frecuencia del reloj en Hz (por defecto, 50 MHz).
+    SOUND_SPEED: Velocidad del sonido en el aire en cm/s (34,300 cm/s).
+    DISTANCE_THRESHOLD: Umbral de distancia para la detección del objeto (10 cm).
+    TIME_THRESHOLD: Tiempo máximo esperado en ciclos de reloj para detectar el retorno del pulso "echo" a la distancia de 10 cm.
 
 Generación del Pulso trigger:
 Se utiliza un contador (trigger_count) de 24 bits para activar el trigger durante 10 us. Se cuentan los ciclos de reloj en trigger_count de 24 bits hasta que se alcanza el valor correspondiente a 10 microsegundos, luego se desactiva el trigger y se espera un tiempo antes de generar un nuevo pulso, este tiempo se guarda en el registro de 32 bits delay_count.
@@ -311,4 +311,29 @@ Se cuentan los ciclos desde que trigger fue lanzado hasta la lectura del input e
 
 Modulo de Sonido
 
+
+
+
+Modulo de Maquina de estados 
+-Objetivo del codigo: De acuerdo a los inputs ( registros de los modulos de output de los sensores y de la maquina de niveles) indicar en un registro de 3 bits el estado en que se encuentra el tatmagotchi
+-Implementacion del codigo: Se crea un Case con los casos Neutro, Feliz, Triste, Cansado, Hambriento, Muerto. Cada Case tiene un puntero el cual indica el siguiente estado que puede transicionar aunque puede transicionar a otros. En el modo test se rige la secuencia de punteros para poder usar un unico pulsador como input y a cada bit de entrada va siguiendo la linkedlist hasta volver al default.
+las condiciones para transicionar entre cada estado son las definidas en el apartado 5.1.1 (vuelva al apartado para tener una descripcion detallada)
+
+Esta por defecto el case Neutro, por lo que al reiniciar se ejecutara este estado.
+
+
+
+Modulo de Niveles
+-Objetivo del codigo: De acuerdo a los inputs de pulsadores retornar los registros de 3 bits de niveles necesarios en la maquina de estados.
+-Implementacion del codigo: 
+Parametros: Parámetros Definidos:
+  CLK_FREQ = 50000000;   // Frecuencia del reloj en Hz (50 MHz por ejemplo)
+  SEGUNDOS_EN_MINUTO = 25;
+
+Inicialmente este modulo recibe los inputs de los pulsadores e implementa un antirrebote de 3 bits, para evitar errores en la pulsacion.
+Para los niveles consta de dos registros de 3 bits, hambre y diversion con estados default de 0 y 5 respectivamente, siguen la logica descrita en el apartado 5.1.1 donde varian de acuerdo al pulsador y a el tiempo transcurrido propuesto (1 minuto) contando los ciclos y almacenandolos en el registro de 32 bits contador_reloj.
+
+
+
+Modulo de LCD Custom Char
 
