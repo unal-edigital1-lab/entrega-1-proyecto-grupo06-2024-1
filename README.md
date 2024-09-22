@@ -58,8 +58,12 @@ Se implementarán tres sensores para enriquecer la interacción del usuario con 
  2. **Sensor de Sonido**: Utilizado para la deteccion de algun ruido y asi verificar la presencia del cuidador de modo que nuestro compañero asi no nos entienda, sepa que tiene a alguien presente
 
 
-![Módulo-Sensor-de-Sonido-Ruido-Micrófono-KY-037-1](https://github.com/user-attachments/assets/be1f637c-4a96-49f4-ab26-aff26a97b7d5)
 
+ <p align="center">
+<img src="[https://github.com/user-attachments/assets/3a458edc-7881-47e1-9489-590a3ce574a6](https://github.com/user-attachments/assets/be1f637c-4a96-49f4-ab26-aff26a97b7d5)" title="[Sensor de sonido]" width="600" height="450">
+<div align="center">Sensor de Ultrasonido.</div>
+ 
+</p>
 
 
 
@@ -83,9 +87,8 @@ Se utilizará una pantalla LCD de 2004 basada en el controlador HD44780 para mos
 
 ### 4.1 Diagramas de Bloques
 Se incluirá un diagrama general para los botones, la pantalla, sensores ( ultrasonido y Infrarrojo). 
-![Diagrama de bloques dig drawio (1)](https://github.com/user-attachments/assets/8d51b7ec-5bcd-482a-b93b-e4b28ff2c0fc)
 
-
+![Diagrama de bloques dig drawio (2)](https://github.com/user-attachments/assets/a18a6139-82e4-4ea1-b2f1-a32fefd08c46)
 
 
 ### 4.2 Descripción de Componentes
