@@ -291,3 +291,24 @@ El módulo `niveles` simula la dinámica de un tamagotchi, controlando dos aspec
 
 
 ## Describir modulos
+
+Modulo de Ultrasonido
+- Funcionamiento del ultrasonido: El sensor ultrasónico funciona enviando un pulso de alta frecuencia (ultrasonido) que no es audible para los humanos. Este pulso se envía al activar el pin "trigger" durante un breve periodo de tiempo (10 us según el datasheet del sensor). El sensor emite una onda de sonido que se desplaza en el aire y rebota al encontrar un objeto. Cuando la onda retorna al sensor, se genera un pulso en el pin "echo".
+  Para calcular distancia se convierte el tiempo de espera teniendo que distancia = velocidad del sonido * tiempo / 2 (ya que el tiempo calculado es el de ida y vuelta)
+- Objetivo del codigo: Detectar si el ultrasonido detecta el objeto a una distancia mayor o menor de la indicada en un parametro.
+- Implementacion de codigo: Antes de todo, es necesario recordar que en la Fpga tenemos como parametro una frecuencia fija del reloj, se puede calcular el tiempo de acuerdo a la cantidad de ciclos en un segundo (50 * 10^6).
+  Parametros: Parámetros Definidos:
+  CLOCK_FREQ: Frecuencia del reloj en Hz (por defecto, 50 MHz).
+  SOUND_SPEED: Velocidad del sonido en el aire en cm/s (34,300 cm/s).
+  DISTANCE_THRESHOLD: Umbral de distancia para la detección del objeto (10 cm).
+  TIME_THRESHOLD: Tiempo máximo esperado en ciclos de reloj para detectar el retorno del pulso "echo" a la distancia de 10 cm.
+
+Generación del Pulso trigger:
+Se utiliza un contador (trigger_count) de 24 bits para activar el trigger durante 10 us. Se cuentan los ciclos de reloj en trigger_count de 24 bits hasta que se alcanza el valor correspondiente a 10 microsegundos, luego se desactiva el trigger y se espera un tiempo antes de generar un nuevo pulso, este tiempo se guarda en el registro de 32 bits delay_count.
+
+Medición del Pulso y comparacion:
+Se cuentan los ciclos desde que trigger fue lanzado hasta la lectura del input echo donde se almacena en echo_time de 32 bits, cabe añadir que tambien hay un registro de 1 bit que sirve para indicar el flanco de bajada de echo para proceder con comparar  si es mayor o menor que TIME_THRESHOLD, si es menor, el output object_detected == 0, o si es mayor(else) == 1 
+
+Modulo de Sonido
+
+
