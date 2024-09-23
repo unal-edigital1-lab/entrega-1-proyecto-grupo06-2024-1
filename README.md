@@ -295,22 +295,133 @@ El módulo `niveles` simula la dinámica de un tamagotchi, controlando dos aspec
 Se puede describir el funcionamiento del proyecto en base a seis módulos principales, los cuales procesan información desde el exterior (entnendiendo como exterior los sensores o la FPGA) y comunican dicho procesamiento entre sí y el exterior. Cada uno se encuentra un archivo independiente de verilog, y son los siguientes: "*Ultrasonic_Sensor.v*", "*sensor_sonido.v*", "*fms_estados.v*", "*niveles.v*", "*LCD1602_cust_char.v*" y "*top_module.v*"
 
 ### 7.1 Modulo de Ultrasonido (*Ultrasonic_Sensor.v*)
-- Funcionamiento del ultrasonido: El sensor ultrasónico funciona enviando un pulso de alta frecuencia (ultrasonido) que no es audible para los humanos. Este pulso se envía al activar el pin "trigger" durante un breve periodo de tiempo (10 us según el datasheet del sensor). El sensor emite una onda de sonido que se desplaza en el aire y rebota al encontrar un objeto. Cuando la onda retorna al sensor, se genera un pulso en el pin "echo".
-  Para calcular distancia se convierte el tiempo de espera teniendo que distancia = velocidad del sonido * tiempo / 2 (ya que el tiempo calculado es el de ida y vuelta)
-- Objetivo del codigo: Detectar si el ultrasonido detecta el objeto a una distancia mayor o menor de la indicada en un parametro.
-- Implementacion de codigo: Antes de todo, es necesario recordar que en la Fpga tenemos como parametro una frecuencia fija del reloj, se puede calcular el tiempo de acuerdo a la cantidad de ciclos en un segundo (50 * 10^6).
-  Parametros: Parámetros Definidos:
-    CLOCK_FREQ: Frecuencia del reloj en Hz (por defecto, 50 MHz).
-    SOUND_SPEED: Velocidad del sonido en el aire en cm/s (34,300 cm/s).
-    DISTANCE_THRESHOLD: Umbral de distancia para la detección del objeto (10 cm).
-    TIME_THRESHOLD: Tiempo máximo esperado en ciclos de reloj para detectar el retorno del pulso "echo" a la distancia de 10 cm.
 
-Generación del Pulso trigger:
-Se utiliza un contador (trigger_count) de 24 bits para activar el trigger durante 10 us. Se cuentan los ciclos de reloj en trigger_count de 24 bits hasta que se alcanza el valor correspondiente a 10 microsegundos, luego se desactiva el trigger y se espera un tiempo antes de generar un nuevo pulso, este tiempo se guarda en el registro de 32 bits delay_count.
+```verilog
+module Ultrasonic_Sensor ( 
+    input wire clk,           // Señal de reloj
+    input wire ech,           // Señal del pulso "echo"
+    output reg trigger_o,     // Señal de activación del "trigger"
+    output reg object_detected // Salida que indica si se detectó un objeto
+);
 
-Medición del Pulso y comparacion:
-Se cuentan los ciclos desde que trigger fue lanzado hasta la lectura del input echo donde se almacena en echo_time de 32 bits, cabe añadir que tambien hay un registro de 1 bit que sirve para indicar el flanco de bajada de echo para proceder con comparar  si es mayor o menor que TIME_THRESHOLD, si es menor, el output object_detected == 0, o si es mayor(else) == 1 
+    // Parámetros para el cálculo de tiempo
+    parameter CLOCK_FREQ = 50000000; // Frecuencia del reloj en Hz (ej. 50MHz)
+    parameter SOUND_SPEED = 34300;   // Velocidad del sonido en cm/s
+    parameter DISTANCE_THRESHOLD = 10; // Umbral de 10 cm
 
+    // Calculamos el tiempo en ciclos de reloj para que el eco vuelva
+    parameter TIME_THRESHOLD = (4 * DISTANCE_THRESHOLD * CLOCK_FREQ) / SOUND_SPEED;
+
+    reg [31:0] echo_time; // Contador de tiempo para el pulso "echo"
+    reg measuring;        // Bandera que indica si estamos midiendo el tiempo
+    reg [23:0] trigger_count; // Contador para el tiempo de activación del trigger
+    reg [31:0] delay_count;   // Contador para el retraso entre triggers
+
+    // Inicialización de registros
+    initial begin
+        measuring <= 0;
+        echo_time <= 0;
+        trigger_count <= 0;
+        delay_count <= 0;
+        object_detected <= 0;
+        trigger_o <= 0;
+    end
+
+    // FSM para generar el pulso "trigger" (10us cada 60ms aprox.)
+    always @(posedge clk) begin
+        if (delay_count == 0) begin
+            if (trigger_count == 0) begin
+                trigger_o <= 1; // Activa el trigger por 10us
+                trigger_count <= CLOCK_FREQ / 100000; // 10us a 50MHz
+            end else if (trigger_count == 1) begin
+                trigger_o <= 0; // Desactiva el trigger
+                trigger_count <= 0;
+                delay_count <= CLOCK_FREQ / 16; // Retardo de aprox. 60ms entre triggers (CLOCK_FREQ/16 aprox 3ms)
+            end else begin
+                trigger_count <= trigger_count - 1;
+            end
+        end else begin
+            delay_count <= delay_count - 1;
+        end
+    end
+
+    // Estado de medición de la señal "echo"
+    always @(posedge clk) begin
+        if (trigger_o == 0 && ech == 1 && !measuring) begin
+            // Comenzamos a medir cuando recibimos el flanco ascendente de "echo"
+            measuring <= 1;
+            echo_time <= 0;
+        end else if (measuring) begin
+            if (ech == 0) begin
+                // Terminamos de medir cuando recibimos el flanco descendente de "echo"
+                measuring <= 0;
+
+                // Si el tiempo es menor al umbral, detectamos el objeto
+                if (echo_time < TIME_THRESHOLD) begin
+                    object_detected <= 0;
+                end else begin
+                    object_detected <= 1;
+                end
+            end else begin
+                // Seguimos midiendo el tiempo del pulso "echo"
+                echo_time <= echo_time + 1;
+            end
+        end
+    end
+
+endmodule
+
+```
+Este módulo en Verilog controla un sensor ultrasónico que mide la distancia a un objeto usando pulsos de sonido generados por el sensor, que luego evalúa el tiempo de retardo de la respuesta del rebote de la perturbación del sonido. Así pues, la distancia se mide en términos de retardo temporal, por lo que se hace necesario calcular el tiempo que tarda el eco en regresar por medio del código de verilog, teniendo como otro parámetro parcial la distancia, y usar este valor para influenciar en los estados de la máquina del proyecto.
+
+A continuación, se explica el funcionamiento del módul línea por línea, función por función, y se describe su integración con otros módulos.
+
+```verilog
+module Ultrasonic_Sensor ( 
+    input wire clk,           // Señal de reloj
+    input wire ech,           // Señal del pulso "echo"
+    output reg trigger_o,     // Señal de activación del "trigger"
+    output reg object_detected // Salida que indica si se detectó un objeto
+);
+```
+Se declaran dos entradas y dos salidas con "input" y "output": se necesita para describir el exterior dos señales, que por ser variantes en el tiempo se declaran como "wire", pudiendo obtener así valores de "1" o "0". Estas dos corresponden a lo que detecta el sensor de ultrasonido con su salida digital (HIGH, LOW) y los pulsos de reloj de la FPGA. Por el lado de las salidas, se necesita generar pulsos de activación que reciba el pin de "trigger" en el ultrasonido, y guardar la información de que en efecto hay un objeto en la cercanía, sabido por los cálculos hechos en el código, de forma que ambos se declaran como registros "reg".
+
+```verilog
+// Parámetros para el cálculo de tiempo
+parameter CLOCK_FREQ = 50000000; // Frecuencia del reloj en Hz (ej. 50MHz)
+parameter SOUND_SPEED = 34300;   // Velocidad del sonido en cm/s
+parameter DISTANCE_THRESHOLD = 10; // Umbral de 10 cm
+```
+Estos parámetros se usan en el código, pues son constantes que conocemos de antemano y de las cuales dependemos para hacer los cálculos necesarios de distancia en función del tiempo de retardo del echo: sabemos que la frecuencia de reloj es de 50 MHz, que la velocidad del sonido en condiciones atomsféricas comunes es de 34300 cm/s, y ya, por decisión nuestra, que se considerará que el sistema "habrá detectado un objeto en la cercanía" si está a 10cm o menos de distancia. Se trabajan en estas unidades por ser de fácil manipulación: segundos, por estar directamente relacionado con el funcionamiento de la FPGA, y centímetros por ser una unidad de distancia apropiada para los rangos de proximidad que buscamos detectar.
+
+```verilog
+parameter TIME_THRESHOLD = (4 * DISTANCE_THRESHOLD * CLOCK_FREQ) / SOUND_SPEED;
+```
+
+Se crea otro parámetro derivado de los anteriores tres llamado "tiempo límite", que corresponde al tiempo máximo en ciclos de reloj para detectar el eco. Destaca en el cálculo que hay una constante de proporcionalidad "4": se debe a que el tiempo de ida y vuelta del sonido se multiplica por 2, y hay un factor de 2 más debido a la conversión de distancia a tiempo, de forma que es para una correción del tiempo de medición.
+
+```verilog
+reg [31:0] echo_time; // Contador de tiempo para el pulso "echo"
+reg measuring;        // Bandera que indica si estamos midiendo el tiempo
+reg [23:0] trigger_count; // Contador para el tiempo de activación del trigger
+reg [31:0] delay_count;   // Contador para el retraso entre triggers
+```
+Se declaran, además de los anteriores cuatro parámetros de tamaños diferentes determinada por su función particular, procurando que no sean más grandes de lo necesario. "echo_time" servirá para almacenar el tiempo del eco, "measuring" indicará si se está midiendo el tiempo de pulso del eco (es, pues, una variable auxiliar), "trigger_count" almacenará como contador la duración del pulso del trigger para el ultrasonido y "delay_count" será otro contador para gestionar el tiempo de espera entre los pulsos del trigger.
+
+```verilog
+initial begin
+    echo_time = 0;
+    measuring = 0;
+    trigger_o = 0;
+    trigger_count = 0;
+    delay_count = 0;
+end
+```
+El anterior bloque únicamente inicializa todo en cero, a fin de comenzar los cálculos apropiadamente y sin basura en la memoria. Ahora bien, después de todo esto, por fin se puede inicializar el bloque cíclico dependiente del pulso de reloj:
+
+```verilog
+always @(posedge clk) begin
+```
 
 
 ### 7.2 Modulo de Sonido (*sensor_sonido.v*)
