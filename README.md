@@ -646,15 +646,118 @@ end
 endmodule
 ```
 
-### 7.4 Modulo de Niveles (*niveles.v*)
--Objetivo del codigo: De acuerdo a los inputs de pulsadores retornar los registros de 3 bits de niveles necesarios en la maquina de estados.
--Implementacion del codigo: 
-Parametros: Parámetros Definidos:
-  CLK_FREQ = 50000000;   // Frecuencia del reloj en Hz (50 MHz por ejemplo)
-  SEGUNDOS_EN_MINUTO = 25;
+El módulo "fms_estados.v" es una máquina de estados finitos que controla el comportamiento del "tamagotchi", basado en diversas entradas de sensores y niveles de estados internos, información recopilada por medio de los demás módulos. En la declaración se puede ver lo siguiente:
 
-Inicialmente este modulo recibe los inputs de los pulsadores e implementa un antirrebote de 3 bits, para evitar errores en la pulsacion.
-Para los niveles consta de dos registros de 3 bits, hambre y diversion con estados default de 0 y 5 respectivamente, siguen la logica descrita en el apartado 5.1.1 donde varian de acuerdo al pulsador y a el tiempo transcurrido propuesto (1 minuto) contando los ciclos y almacenandolos en el registro de 32 bits contador_reloj.
+```verilog
+module fms_estados (
+    input wire clk,           // Señal de reloj
+    input wire reset_n,       // Señal de reset negada (activa en 0)
+    input wire test_n,        // Señal de test negada (botón activo en 0)
+    input wire [2:0] hambre,  // Nivel de hambre (1 a 5)
+    input wire [2:0] diversion, // Nivel de diversión (1 a 5)
+    input wire ultrasonido_n, // Sensor ultrasonido negado (0 si detecta presencia)
+    input wire ruido_n,       // Sensor de ruido negado (0 si detecta ruido)
+    output reg [2:0] estado   // Estado actual del tamagotchi (codificado en 3 bits)
+);
+```
+Son siete las entradas: dos de pulsadores (que no requieren de módulos), dos de sensores (ultrasonido y sensor auditivo), dos variables de estado (hambre y diversión), y el reloj de la FPGA. Se tiene, sin embargo, una entrada: el estado parcial del tamagochi.
+
+```verilog
+// Definición de los estados
+localparam NEUTRO     = 3'b000,
+           FELIZ      = 3'b001,
+           TRISTE     = 3'b010,
+           CANSADO    = 3'b011,
+           HAMBRIENTO = 3'b100,
+           MUERTO     = 3'b101;
+```
+Se definen los estados en términos de constantes para un registro de tres bits, asignando un número a cada estado por sencillez. Así pues, el regsitro de "estado" podrá tomar dichos valores.
+
+```verilog
+reg [2:0] next_estado;       // Estado siguiente
+reg [31:0] test_counter;     // Contador para detectar 5 segundos en modo test
+reg test_mode;               // Bandera para el modo test
+```
+
+Se pueden considerar estos como registros auxiliares: "next_estado" almacena el estado siguiente de la máquina de estados (es decir, a qué estado va a cambiar después de terminado el bloque), "test_counter" es un contador para medir un intervalo de cinco segundos en el modo prueba (como dice comentado), y "test_mode" indica si el tamagochi está en modo prueba o no (1 ó 0).
+
+```verilog
+// Máquina de estados para cambiar el comportamiento del tamagotchi
+always @(posedge clk or negedge reset_n) begin
+    if (!reset_n) begin
+        estado <= NEUTRO;
+        test_counter <= 0;
+        test_mode <= 0;
+    end else begin
+        estado <= next_estado;
+        if (!test_n) begin
+            if (test_counter >= 500000000) begin
+                test_mode <= 1;
+            end else begin
+                test_counter <= test_counter + 1;
+            end
+        end else begin
+            test_mode <= 0;
+            test_counter <= 0;
+        end
+    end
+end
+```
+Es ahora cuando se comienza el bloque cíclico dada la frecuencia de reloj: primero se verifica si el pulsador asociado a "reset" está activado, en cuyo caso se devuelve el estado del tamagochi a NEUTRO y se reinician los contadores para volver a iniciar. En caso contrario, significa que no se pretende reiniciar y se quiere cambiar/mantener el estado del tamagochi en base a los valores que definieron el estado almacenado en "next_estado". Por otra parte, también está incluido el bloque de código correspondiente al modo de testeo, que se dará si pasan 5 segundos (ahí planteaos en una unidad más pequeña), y si no se desactivará el modo prueba.
+
+```verilog
+// Lógica de transición de estados
+always @* begin
+    next_estado = estado;
+    case (estado)
+        NEUTRO: begin
+            if (hambre >= 4)
+                next_estado = HAMBRIENTO;
+            else if (diversion <= 2)
+                next_estado = TRISTE;
+            else if (!ultrasonido_n)
+                next_estado = CANSADO;
+            else if (!ruido_n)
+                next_estado = FELIZ;
+        end
+        FELIZ: begin
+            if (hambre >= 4)
+                next_estado = HAMBRIENTO;
+            else if (diversion <= 2)
+                next_estado = TRISTE;
+            else if (!ultrasonido_n)
+                next_estado = CANSADO;
+        end
+        TRISTE: begin
+            if (hambre >= 4)
+                next_estado = HAMBRIENTO;
+            else if (diversion > 3)
+                next_estado = NEUTRO;
+        end
+        CANSADO: begin
+            if (ultrasonido_n)
+                next_estado = NEUTRO;
+        end
+        HAMBRIENTO: begin
+            if (hambre < 4)
+                next_estado = NEUTRO;
+        end
+        MUERTO: begin
+            // Estado final, no se cambia
+        end
+        default: begin
+            next_estado = NEUTRO;
+        end
+    endcase
+end
+endmodule
+```
+
+Ahora, la lógica de transición de estados. Se evitará explicar cada parte, puesto que por inspección se puede notar que explicando un caso se explican los demás: se inicia el bloque funcional, en el cual se selecciona el estado siguiente en base al estado actual. Como variables, diversión y hambre cumplirán o no alguna de las desigualdades, y el encendido o apagado de los indicadores del ultrasonido o el sensor auditivo también determinarán el valor de "next_estado" dentro de todos los casos. Inmediatamente después finaliza el módulo
+
+
+### 7.4 Modulo de Niveles (*niveles.v*)
+
 
 
 
