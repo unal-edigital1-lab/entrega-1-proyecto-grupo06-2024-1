@@ -290,9 +290,11 @@ El módulo `niveles` simula la dinámica de un tamagotchi, controlando dos aspec
 
 
 
-## Describir modulos
+## 7.Descripción de hardware en Verilog
 
-Modulo de Ultrasonido
+Se puede describir el funcionamiento del proyecto en base a seis módulos principales, los cuales procesan información desde el exterior (entnendiendo como exterior los sensores o la FPGA) y comunican dicho procesamiento entre sí y el exterior. Cada uno se encuentra un archivo independiente de verilog, y son los siguientes: "*Ultrasonic_Sensor.v*", "*sensor_sonido.v*", "*fms_estados.v*", "*niveles.v*", "*LCD1602_cust_char.v*" y "*top_module.v*"
+
+### 7.1 Modulo de Ultrasonido (*Ultrasonic_Sensor.v*)
 - Funcionamiento del ultrasonido: El sensor ultrasónico funciona enviando un pulso de alta frecuencia (ultrasonido) que no es audible para los humanos. Este pulso se envía al activar el pin "trigger" durante un breve periodo de tiempo (10 us según el datasheet del sensor). El sensor emite una onda de sonido que se desplaza en el aire y rebota al encontrar un objeto. Cuando la onda retorna al sensor, se genera un pulso en el pin "echo".
   Para calcular distancia se convierte el tiempo de espera teniendo que distancia = velocidad del sonido * tiempo / 2 (ya que el tiempo calculado es el de ida y vuelta)
 - Objetivo del codigo: Detectar si el ultrasonido detecta el objeto a una distancia mayor o menor de la indicada en un parametro.
@@ -309,21 +311,81 @@ Se utiliza un contador (trigger_count) de 24 bits para activar el trigger durant
 Medición del Pulso y comparacion:
 Se cuentan los ciclos desde que trigger fue lanzado hasta la lectura del input echo donde se almacena en echo_time de 32 bits, cabe añadir que tambien hay un registro de 1 bit que sirve para indicar el flanco de bajada de echo para proceder con comparar  si es mayor o menor que TIME_THRESHOLD, si es menor, el output object_detected == 0, o si es mayor(else) == 1 
 
-Modulo de Sonido
+
+
+### 7.2 Modulo de Sonido (*sensor_sonido.v*)
+
+```verilog
+module sensor_sonido(
+    input wire clk,          // Reloj de la FPGA
+    input wire sensor_input, // Entrada del sensor KY-037 (DO)
+    output reg ruido_detectado // Salida: 1 si detecta ruido, 0 si no
+);
+
+    always @(posedge clk) begin
+        // Simplemente se asigna el valor del sensor a la salida
+        if (sensor_input == 1) begin
+            ruido_detectado <= 1; // Detecta ruido
+        end else begin
+            ruido_detectado <= 0; // No detecta ruido
+        end
+    end
+
+endmodule
+```
+
+El módulo sensor_sonido.v es un código en Verilog que interpreta las señales de un sensor de sonido KY-037 y comunica el estado de detección de ruido a la FPGA. 
+
+```verilog
+module sensor_sonido(
+    input wire clk,          // Reloj de la FPGA
+    input wire sensor_input, // Entrada del sensor KY-037 (DO)
+    output reg ruido_detectado // Salida: 1 si detecta ruido, 0 si no
+);
+```
+"module" define el inicio del módulo en Verilog a referenciarse en el top como "sensor_sonido". Se definen, luego, dos entradas y una salida por medio de las declaraciones "input" y "output": 
+
+1.Dado que hay dos señales que se propagan hasta el módulo desde afuera que son necesarias los cambios de estado, las cuales son el reloj que viene desde la FPGA y las excitaciones del sensor de sonido mismo, se determina que sean de tipo "wire", sin necesidad de almacenar ningún valor y con cambio dinámico constante.
+
+2.Por otro lado, se declara un registro "reg" para "ruido_detectado", porque necesita mantener su valor en función del estado de "sensor_input" en el flanco positivo del reloj. Cada vez que cambia "sensor_input", "ruido_detectado" se actualiza y mantiene ese valor hasta el próximo evento de reloj, permitiendo que haya consistencia entre los ciclos de reloj y represente apropiadamente la parte secuencial del sistema. 
+
+```verilog
+always @(posedge clk) begin
+```
+
+Se inicializa un bloque que se ejecuta de forma cíclica en cada flanco ascendente del reloj. Se puede interpretar como que la FPGA se actualiza y cambia sus estado interno cada vez que se da un pulso de reloj (que es cada vez que se ejecuta este bloque).
+
+Dentro de dicho bloque "always" se ve ahora:
+
+```verilog
+    if (sensor_input == 1) begin
+        ruido_detectado <= 1; // Detecta ruido
+    end else begin
+        ruido_detectado <= 0; // No detecta ruido
+    end
+```
+
+Se puede interpretar este proceso de la siguiente manera: si el sensor, ya por su funcionamiento interno, está excitado, sabemos que va a mandar una señal HIGH desde su pin de salida DIGITAL si está alimentado. Al recibirla la FPGA, y al haberse declarado la entrada con el código, estando asociadas, entonces identifica esta señal HIGH (caso igual a 1), y así también lo hará si es LOW (en caso igual a 0). Dado este valor, se almacena en el registro, que se usará en otro módulo para tomar decisiones con respecto a los cambios de estado del Tamagotchi.
+
+```verilog
+end
+endmodule
+```
+
+Finalizando en bloque, y el módulo, se puede reducir este módulo en descripción de la siguiente forma: "dependiendo de las excitaciones del sensor de sonidos, que se den cambios en un registro que identificará cómo debe operarse en la máquina de estados finitos"
 
 
 
 
-Modulo de Maquina de estados 
+### 7.3 Modulo de Maquina de estados (*fms_estados.v*)
 -Objetivo del codigo: De acuerdo a los inputs ( registros de los modulos de output de los sensores y de la maquina de niveles) indicar en un registro de 3 bits el estado en que se encuentra el tatmagotchi
--Implementacion del codigo: Se crea un Case con los casos Neutro, Feliz, Triste, Cansado, Hambriento, Muerto. Cada Case tiene un puntero el cual indica el siguiente estado que puede transicionar aunque puede transicionar a otros. En el modo test se rige la secuencia de punteros para poder usar un unico pulsador como input y a cada bit de entrada va siguiendo la linkedlist hasta volver al default.
-las condiciones para transicionar entre cada estado son las definidas en el apartado 5.1.1 (vuelva al apartado para tener una descripcion detallada)
+-Implementacion del codigo: Se crea un Case con los casos Neutro, Feliz, Triste, Cansado, Hambriento, Muerto. Cada Case tiene un puntero el cual indica el siguiente estado que puede transicionar aunque puede transicionar a otros. En el modo test se rige la secuencia de punteros para poder usar un unico pulsador como input y a cada bit de entrada va siguiendo la linkedlist hasta volver al default. las condiciones para transicionar entre cada estado son las definidas en el apartado 5.1.1 (vuelva al apartado para tener una descripcion detallada)
 
 Esta por defecto el case Neutro, por lo que al reiniciar se ejecutara este estado.
 
 
 
-Modulo de Niveles
+### 7.4 Modulo de Niveles (*niveles.v*)
 -Objetivo del codigo: De acuerdo a los inputs de pulsadores retornar los registros de 3 bits de niveles necesarios en la maquina de estados.
 -Implementacion del codigo: 
 Parametros: Parámetros Definidos:
@@ -336,4 +398,7 @@ Para los niveles consta de dos registros de 3 bits, hambre y diversion con estad
 
 
 Modulo de LCD Custom Char
+
+
+MÓDULO S
 
