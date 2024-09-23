@@ -758,11 +758,627 @@ Ahora, la lógica de transición de estados. Se evitará explicar cada parte, pu
 
 ### 7.4 Modulo de Niveles (*niveles.v*)
 
+```verilog
+module niveles (
+    input wire clk,               // Señal de reloj
+    input wire alimentar,         // Botón para alimentar (lógica negada)
+    input wire jugar,             // Botón para jugar (lógica negada)
+    input wire reset,             // Botón de reset (lógica negada)
+    input wire test,              // Botón de test (lógica negada)
+    output reg [2:0] nivel_hambre,  // Nivel de hambre (1 a 5)
+    output reg [2:0] nivel_diversion, // Nivel de diversión (1 a 5)
+    output reg reset_debounced,   // Señal de reset después del antirrebote
+    output reg test_debounced     // Señal de test después del antirrebote
+);
+
+parameter CLK_FREQ = 50000000;   // Frecuencia del reloj en Hz (50 MHz por ejemplo)
+parameter SEGUNDOS_EN_MINUTO = 25;
+
+reg [31:0] contador_reloj = 0;  // Contador para dividir el reloj
+reg minuto;                      // Señal interna que indica que ha pasado 1 minuto
+
+// Definiciones para antirrebote
+reg [2:0] alimentar_shift, jugar_shift, reset_shift, test_shift; // Shift registers para antirrebote
+wire alimentar_db, jugar_db, reset_db, test_db;
+
+// Antirrebote por desplazamiento
+always @(posedge clk) begin
+    alimentar_shift <= {alimentar_shift[1:0], alimentar};
+    jugar_shift     <= {jugar_shift[1:0], jugar};
+    reset_shift     <= {reset_shift[1:0], reset};
+    test_shift      <= {test_shift[1:0], test};
+end
+
+// Señales debounced (filtro de 3 bits: todas deben ser iguales para considerar estable la señal)
+assign alimentar_db = &alimentar_shift;
+assign jugar_db     = &jugar_shift;
+assign reset_db     = &reset_shift;
+assign test_db      = &test_shift;
+
+// Inicialización de los niveles
+initial begin
+    nivel_hambre = 3'd1;      // Nivel inicial de hambre
+    nivel_diversion = 3'd5;   // Nivel inicial de diversión
+    minuto = 0;               // Inicialmente no ha pasado ningún minuto
+end
+
+// Lógica para generar la señal de "minuto" usando el reloj
+always @(posedge clk) begin
+    if (contador_reloj >= CLK_FREQ * SEGUNDOS_EN_MINUTO - 1) begin
+        contador_reloj <= 0;   // Reiniciar el contador
+        minuto <= 1;           // Señal de que ha pasado 1 minuto
+    end else begin
+        contador_reloj <= contador_reloj + 1;
+        minuto <= 0;           // Mientras no pase un minuto, esta señal permanece en 0
+    end
+end
+
+// Lógica secuencial para ajustar los niveles de hambre y diversión
+always @(posedge clk) begin
+    if (!reset_db) begin
+        nivel_hambre <= 3'd1;
+        nivel_diversion <= 3'd5; // Ambos niveles se reinician a sus valores iniciales
+    end else begin
+        // Alimentar al Tamagotchi si se presiona el botón alimentar (lógica negada)
+        if (!alimentar_db && alimentar_shift[2:1] == 2'b01 && nivel_hambre > 1) begin
+            nivel_hambre <= nivel_hambre - 1;  // Bajar nivel de hambre
+        end
+
+        // Jugar con el Tamagotchi si se presiona el botón jugar (lógica negada)
+        if (!jugar_db && jugar_shift[2:1] == 2'b01 && nivel_diversion < 5) begin
+            nivel_diversion <= nivel_diversion + 1;  // Subir nivel de diversión
+        end
+
+        // Cada vez que pasa un minuto, ajustar niveles
+        if (minuto) begin
+            if (nivel_hambre < 5) begin
+                nivel_hambre <= nivel_hambre + 1;
+            end
+
+            if (nivel_diversion > 1) begin
+                nivel_diversion <= nivel_diversion - 1;
+            end
+        end
+    end
+end
+endmodule
+```
+
+El módulo niveles gestiona los niveles de hambre y diversión del tamagotchi digital, así como las señales de control para restablecer o probar el sistema. Se declaran así las siguientes entradas y salidas:
+
+```verilog
+module niveles (
+    input wire clk,               // Señal de reloj
+    input wire alimentar,         // Botón para alimentar (lógica negada)
+    input wire jugar,             // Botón para jugar (lógica negada)
+    input wire reset,             // Botón de reset (lógica negada)
+    input wire test,              // Botón de test (lógica negada)
+    output reg [2:0] nivel_hambre,  // Nivel de hambre (1 a 5)
+    output reg [2:0] nivel_diversion, // Nivel de diversión (1 a 5)
+    output reg reset_debounced,   // Señal de reset después del antirrebote
+    output reg test_debounced     // Señal de test después del antirrebote
+);
+```
+Se tienen cinco entradas: dos entradas para aumentar algún nivel (alimentar o jugar), dos entradas para controlar modos (volver al modo inicial por reset, o modo prueba), y una correspondiente al pulso de reloj. Por otro lado, cuatro entradas, correspondientes dos a indicadores del *nivel* (de hambre o diversión) y dos necesarias después de aplicar el antirrebote (para test y reset).
+
+```verilog
+parameter CLK_FREQ = 50000000;   // Frecuencia del reloj en Hz (50 MHz por ejemplo)
+parameter SEGUNDOS_EN_MINUTO = 25;
+```
+Se declaran constantes: una, la frecuencia a la que trabaja la FPGA y la otra el número de ticks (representando segundos) que habrán en un minuto
+
+```verilog
+reg [31:0] contador_reloj = 0;  // Contador para dividir el reloj
+reg minuto;                      // Señal interna que indica que ha pasado 1 minuto
+// Definiciones para antirrebote
+reg [2:0] alimentar_shift, jugar_shift, reset_shift, test_shift;
+```
+
+Se dan dos registros, uno para contar los ciclos del reloj transcurridos, y el otro para indicar si ya transcurrió un minuto (1 ó 0). En suma, otros registros que se usan para filtrar señales como "alimentar", "jugar", "reset" y "test" y eliminar el rebote de botones.
+
+```verilog
+always @(posedge clk) begin
+    if (contador_reloj < CLK_FREQ - 1) begin
+        contador_reloj <= contador_reloj + 1;
+        minuto <= 0;
+    end else begin
+        contador_reloj <= 0;
+        minuto <= 1;
+    end
+end
+```
+Ahora con el ciclo de flanco positivo del reloj: en este únicamente se dedica a contar tiempo en términos de minutos y ticks. Estas variables temporales son necesarias para que el tamagochi cambie de estado de forma natural en base a la frecuencia a la que transcurre el reloj de la FPGA, razón por la cual es necesario llevar ese transcurso temporal a una unidad de tiempo más cómoda, y luego guardar el dato para poder usarlo en los niveles.
+
+```verilog
+always @(posedge clk) begin
+    if (reset == 0) begin
+        nivel_hambre <= 3'b001;
+        nivel_diversion <= 3'b001;
+    end else if (test == 0) begin
+        nivel_hambre <= 3'b111;
+        nivel_diversion <= 3'b111;
+    end else if (minuto == 1) begin
+        if (nivel_hambre < 3'b101)
+            nivel_hambre <= nivel_hambre + 1;
+        if (nivel_diversion > 3'b001)
+            nivel_diversion <= nivel_diversion - 1;
+    end
+
+    if (alimentar == 0 && nivel_hambre > 3'b001)
+        nivel_hambre <= nivel_hambre - 1;
+    if (jugar == 0 && nivel_diversion < 3'b101)
+        nivel_diversion <= nivel_diversion + 1;
+end
+endmodule
+```
+Se da ahora la lógica para incrementar o decrementar los niveles respectivos en base a las entradas y los registros que se tienen: si está pulsado el reset, o test, si se está jugando con él o no o se esta alimentando o no, o si ha transcurrido un minuto, cada no afectando de forma distinta los dos niveles respectivos. Ya habiendo determinados los niveles, se pueden mandar fuera del módulo para ser usados en la máquina de estados.
+
+### 7.5 Modulo del visualizador (*LCD1602_cust_char.v*)
+
+```verilog
+module LCD1602_cust_char #(parameter num_commands = 3, 
+                                      num_data_all = 384,  // Ahora hay 240 filas en el archivo de datos
+                                      char_data = 8, 
+                                      num_cgram_addrs = 6,
+                                      COUNT_MAX = 800000)(
+    input clk,            
+    input reset,          
+    input ready_i,
+    input [2:0] control_signal,  // Señal de control de entrada (valores de 0 a 7)
+    input [2:0] nivel_hambre,    // Entrada de nivel de hambre (3 bits)
+    input [2:0] nivel_diversion, // Entrada de nivel de diversión (3 bits)
+    output reg rs,        
+    output reg rw,
+    output enable,    
+    output reg [7:0] data
+);
+
+// Definir los estados del controlador
+localparam IDLE = 0;
+localparam INIT_CONFIG = 1;
+localparam CLEAR_COUNTERS0 = 2;
+localparam CREATE_CHARS = 3;
+localparam CLEAR_COUNTERS1 = 4;
+localparam SET_CURSOR_AND_WRITE = 5;
+localparam WRITE_EXTRA_TEXT = 6;
+
+localparam SET_CGRAM_ADDR = 0;
+localparam WRITE_CHARS = 1;
+localparam SET_CURSOR = 2;
+localparam WRITE_LCD = 3;
+localparam CHANGE_LINE = 4;
+
+// Direcciones de escritura de la CGRAM 
+localparam CGRAM_ADDR0 = 8'h40;
+localparam CGRAM_ADDR1 = 8'h48;
+localparam CGRAM_ADDR2 = 8'h50;
+localparam CGRAM_ADDR3 = 8'h58;
+localparam CGRAM_ADDR4 = 8'h60;
+localparam CGRAM_ADDR5 = 8'h68;
+localparam CGRAM_ADDR6 = 8'h70;
 
 
 
-Modulo de LCD Custom Char
+reg [3:0] fsm_state;
+reg [3:0] next;
+reg clk_16ms;
+
+// Definir un contador para el divisor de frecuencia
+reg [$clog2(COUNT_MAX)-1:0] counter_div_freq;
+
+// Comandos de configuración
+localparam CLEAR_DISPLAY = 8'h01;
+localparam SHIFT_CURSOR_RIGHT = 8'h06;
+localparam DISPON_CURSOROFF = 8'h0C;
+localparam DISPON_CURSORBLINK = 8'h0E;
+localparam LINES2_MATRIX5x8_MODE8bit = 8'h38;
+localparam LINES2_MATRIX5x8_MODE4bit = 8'h28;
+localparam LINES1_MATRIX5x8_MODE8bit = 8'h30;
+localparam LINES1_MATRIX5x8_MODE4bit = 8'h20;
+localparam START_2LINE = 8'hC0;
 
 
-MÓDULO S
 
+// Posiciones para escribir NH y ND en la segunda línea
+// Posiciones para escribir NH y ND en las líneas correctas
+localparam POS_NH = 8'h94;  // Dirección de la primera línea del LCD para "NH:"
+localparam POS_ND = 8'hD4;  // Dirección de la segunda línea del LCD para "ND:"
+
+reg [4:0] current, next1;
+
+
+
+// Definir un contador para controlar el envío de comandos
+reg [$clog2(num_commands):0] command_counter;
+// Definir un contador para controlar el envío de cada dato
+reg [$clog2(num_data_all):0] data_counter;
+// Definir un contador para controlar el envío de caracteres a la CGRAM
+reg [$clog2(char_data):0] char_counter;
+// Definir un contador para controlar el envío de comandos
+reg [$clog2(num_cgram_addrs):0] cgram_addrs_counter;
+
+// Banco de registros
+reg [7:0] data_memory [0: num_data_all-1];
+reg [7:0] config_memory [0:num_commands-1]; 
+reg [7:0] cgram_addrs [0: num_cgram_addrs-1];
+
+reg [1:0] create_char_task;
+reg init_config_executed;
+wire done_cgram_write;
+reg done_lcd_write;
+
+// Variables para almacenar el nivel de hambre y diversión en ASCII
+reg [7:0] dec_hambre;  
+reg [7:0] dec_diversion;
+
+initial begin
+    fsm_state <= IDLE;
+    data <= 'b0;
+    command_counter <= 'b0;
+    data_counter <= 'b0;
+    rw <= 0;
+    rs <= 0;
+    clk_16ms <= 'b0;
+    counter_div_freq <= 'b0;
+    init_config_executed <= 'b0;
+    cgram_addrs_counter <= 'b0; 
+    char_counter <= 'b0;
+    done_lcd_write <= 1'b0;
+	 current = 0;
+    next1 = 0;
+	 
+
+
+    create_char_task <= SET_CGRAM_ADDR;
+
+    // Leer 240 datos del archivo de texto
+    $readmemb("data.txt", data_memory);    
+    config_memory[0] <= LINES2_MATRIX5x8_MODE8bit;
+    config_memory[1] <= DISPON_CURSOROFF;
+    config_memory[2] <= CLEAR_DISPLAY;
+
+    cgram_addrs[0] <= CGRAM_ADDR0;
+    cgram_addrs[1] <= CGRAM_ADDR1;
+    cgram_addrs[2] <= CGRAM_ADDR2;
+    cgram_addrs[3] <= CGRAM_ADDR3;
+    cgram_addrs[4] <= CGRAM_ADDR4;
+    cgram_addrs[5] <= CGRAM_ADDR5;
+end
+
+// Divisor de frecuencia para generar el enable cada 16ms
+always @(posedge clk) begin
+    if (counter_div_freq == COUNT_MAX-1) begin
+        clk_16ms <= ~clk_16ms;
+        counter_div_freq <= 0;
+    end else begin
+        counter_div_freq <= counter_div_freq + 1;
+    end
+end
+
+// Conversión de los valores de nivel de hambre y diversión a decimal (ASCII)
+always @(*) begin
+    dec_hambre = 8'h30 + nivel_hambre;  // Convertir nivel de hambre a ASCII
+    dec_diversion = 8'h30 + nivel_diversion;  // Convertir nivel de diversión a ASCII
+end
+
+// Máquina de estados
+always @(posedge clk_16ms) begin
+    if (reset == 0) begin
+        fsm_state <= IDLE;
+    end else begin
+        fsm_state <= next;
+    end
+end
+
+always @(*) begin
+    case(fsm_state)
+        IDLE: begin
+            next <= (ready_i)? ((init_config_executed)? CREATE_CHARS : INIT_CONFIG) : IDLE;
+        end
+        INIT_CONFIG: begin 
+            next <= (command_counter == num_commands)? CLEAR_COUNTERS0 : INIT_CONFIG;
+        end
+        CLEAR_COUNTERS0: begin
+            next <= CREATE_CHARS;
+        end
+        CREATE_CHARS:begin
+            next <= (done_cgram_write)? CLEAR_COUNTERS1 : CREATE_CHARS;
+        end
+        CLEAR_COUNTERS1: begin
+            next <= SET_CURSOR_AND_WRITE;
+        end
+        SET_CURSOR_AND_WRITE: begin 
+            next <= (done_lcd_write)? WRITE_EXTRA_TEXT : SET_CURSOR_AND_WRITE;
+        end
+        WRITE_EXTRA_TEXT: begin
+            next <= (done_lcd_write)? CLEAR_COUNTERS0 : WRITE_EXTRA_TEXT;  // Volver al inicio después de escribir el texto extra
+        end
+        default: next = IDLE;
+    endcase
+end
+
+always @(posedge clk_16ms) begin
+    if (reset == 0) begin
+        command_counter <= 'b0;
+        data_counter <= 'b0;
+        data <= 'b0;
+        char_counter <= 'b0;
+        init_config_executed <= 'b0;
+        cgram_addrs_counter <= 'b0;
+        done_lcd_write <= 1'b0;
+		  current = 0;
+        next1 = 0;
+		 
+    end else begin
+        case (next)
+            IDLE: begin
+                char_counter <= 'b0;
+                command_counter <= 'b0;
+                data_counter <= 'b0;
+                rs <= 'b0;
+                cgram_addrs_counter <= 'b0;
+                done_lcd_write <= 1'b0;
+            end
+            INIT_CONFIG: begin
+                rs <= 'b0;
+                command_counter <= command_counter + 1;
+                data <= config_memory[command_counter];
+                if(command_counter == num_commands-1) begin
+                    init_config_executed <= 1'b1;
+                end
+            end
+            CLEAR_COUNTERS0: begin
+                data_counter <= 'b0;
+                char_counter <= 'b0;
+                create_char_task <= SET_CGRAM_ADDR;
+                cgram_addrs_counter <= 'b0;
+                done_lcd_write <= 1'b0;
+                rs <= 'b0;
+                data <= 'b0;
+            end
+            CREATE_CHARS: begin
+                case(create_char_task)
+                    SET_CGRAM_ADDR: begin 
+                        rs <= 'b0; data <= cgram_addrs[cgram_addrs_counter]; 
+                        create_char_task <= WRITE_CHARS; 
+                    end
+                    WRITE_CHARS: begin
+                        rs <= 1; 
+                        data <= data_memory[(control_signal * 48) + data_counter];  // Seleccionar el bloque correcto de datos
+                        data_counter <= data_counter + 1;
+                        if(char_counter == char_data -1) begin
+                            char_counter = 0;
+                            create_char_task <= SET_CGRAM_ADDR;
+                            cgram_addrs_counter <= cgram_addrs_counter + 1;
+                        end else begin
+                            char_counter <= char_counter +1;
+                        end
+                    end
+                endcase
+            end
+				
+            CLEAR_COUNTERS1: begin
+                data_counter <= 'b0;
+                char_counter <= 'b0;
+                create_char_task <= SET_CURSOR;
+                cgram_addrs_counter <= 'b0;
+            end
+            SET_CURSOR_AND_WRITE: begin
+                case(create_char_task)
+                    SET_CURSOR: begin
+                        rs <= 0; data <= (cgram_addrs_counter > 2)? 8'h80 + (cgram_addrs_counter%3) + 8'h40 : 8'h80 + (cgram_addrs_counter%3);
+                        create_char_task <= WRITE_LCD; 
+                    end
+                    WRITE_LCD: begin
+                        rs <= 1; data <=  8'h00 + cgram_addrs_counter;
+                        if(cgram_addrs_counter == num_cgram_addrs-1)begin
+                            cgram_addrs_counter = 'b0;
+                            done_lcd_write <= 1'b1;
+                        end else begin
+                            cgram_addrs_counter <= cgram_addrs_counter + 1;
+                        end
+                        create_char_task <= SET_CURSOR; 
+                    end
+                endcase
+            end
+            WRITE_EXTRA_TEXT: begin
+				    done_lcd_write <= 1'b0;
+				    current = next1;
+                case(current)
+                    // Escribir "NH:" en la posición POS_NH
+                    0: begin
+                        rs <= 0;
+                        data <= POS_NH ;  // Posición para "NH:"
+                        next1 <= 1;
+	
+                    end
+                    1: begin
+                        rs <= 1;
+                        data <= "N";  // 'N'
+								next1 <= 2;
+                       
+                    end
+                    2: begin
+                        rs <= 1;
+                        data <= "H";  // 'H'
+                        next1 <= 3;
+
+                    end
+                    3: begin
+                        rs <= 1;
+                        data <= ":";  // ':'
+                        next1 <= 4;
+                    end
+                    4: begin
+                        rs <= 1;
+                        data <= dec_hambre;  // Valor decimal del nivel de hambre
+                        next1 <= 5;
+                    end
+						 
+                    // Escribir "ND:" en la posición POS_ND
+                    5: begin
+                        rs <= 0;
+                        data <= POS_ND;  // Posición para "ND:"
+                        next1 <= 6;
+                    end
+                    6: begin
+                        rs <= 1;
+                        data <= "N";  // 'N'
+                        next1 <= 7;
+								
+                    end
+                    7: begin
+                        rs <= 1;
+                        data <= "D";  // 'D'
+                        next1 <= 8;
+								
+                    end
+                    8: begin
+                        rs <= 1;
+                        data <= ":";  // ':'
+                        next1 <= 9;
+								
+                    end
+                    9: begin
+                        rs <= 1;
+                        data <= dec_diversion;  // Valor decimal del nivel de diversión
+                        next1 <= 10;  // Volver al inicio
+								
+							end
+						  10: begin
+                        rs <= 1;
+                        data <= " ";  // Valor decimal del nivel de diversión
+                        next1 <= 0;  // Volver al inicio
+								done_lcd_write <= 1'b1;
+                     end
+                endcase					 
+            end
+        endcase
+    end
+end
+
+assign enable = clk_16ms;
+assign done_cgram_write = (data_counter == 48-1)? 'b1 : 'b0;  // Usar 48 ya que cada bloque tiene 48 filas
+
+endmodule
+```
+Debido a la longitud del código, y que resultaría innecesariamente extensivo, se va a proceder a explicar la función como un todo de forma resumida.
+
+El código se encarga de inicializar la LCD y controlarla; lo anterior, cargando caracteres personalizados en la memoria CGRAM, que es una incluida en la LCD, para luego gestionarla y mostrar información en ella.
+
+Se declaran como parámetros de módulo el número de comandos de configuración inicial, de datos totales que se leerán del archivo nombrado "data.txt" que contiene los carácteres personalizados, número de datos por carácter personalizado, número de direcciones de CGRAM usadas para almacenar caracteres personalizados, y un valor máximo para el controlador que genera un pulso de habilitación cada 16 milisegundos. 
+
+Para operar con estas herramientas, las entradas del reloj, reset y ready_i son necesarias, que indican a rasgos generales lo que va a ocurrir en todo el LCD. También hay ds señales ya particulares que influiran en lo que se va a mostrar, que son los niveles de hambre definidos en otro módulo y la señal de control para seleccionar los grupos de datos a mostrar.
+
+Las salidas son todas señales de control necesarias para la LCD, correspondientes a cuatro de sus pines: rs, rw, enable y data.
+
+Internamente se da una máquina de estados para la LCD, algunos de ellos siendo IDLE, INIT_CONFIG, CREATE_CHARS (de estos, inicializar pantalla, crear caracteres personalizados, escribir en pantalla). Debido a lo anterior, se hacen necesarias memorias y registros, declaradas para guardar los datos del archivo que almacena los caracteres personalizados, la configuración inicial del LCD, direcciones de almacenamiento, etc.
+
+Luego comienza la operación.
+  1. Cuando se inicializa la operación, se cargan datos a las memorias y se asignan valores iniciales a los regsitros, e inmediatamente después se comienza a contar en base a la frecuencia del reloj en términos de pulsos de habilitación (16ms) sobre la cual trabajará la LCD. 
+  2. Luego, se da da una conversión de los valores de niveles de hambre y diversión a ASCII para que puedan mostrarse en la pantalla como números
+  3. Haciendo uso de la máquina de estados, y en particular de los estados de SET_CURSOR_AND_WRITE y WRITE_EXTRA_TEXT, se establece la posición del cursor y se escriben los caracteres en la pantalla, y si acaso texto adicional en otra parte.
+
+Se puede, pues, describir el funcionamiento en términos de:
+  1. Inicialización: el módulo comienza en IDLE, y dada la entrada "ready_i" se puede o no pasar a INIT_CONFIG para enviar los comandos de configuración
+  2. Configuración: Estando en INIT_CONFIG, se envían comandos, como modo de operación, limpiar pantalla, etc.
+  3. Creación de caracteres: En CREATE_CHARS se almacenan caracteres personalizados a la CGRAM de la pantalla usando los archvios a disposición
+  4. Escritura de la información: En SET_CURSOR_AND_WRITE, se posiciona el cursor y se dibuja el tamagochi (se escriben los caracteres, la información).
+  5. Texto adicional: WRITE_EXTRA_TEXT se reserva como un estado adicional para reflejar en la pantalla los valores de los niveles del tamagochi, separándolo así del estado en el que se dibuja el rostro.
+Más allá de esto, los pulsadores y otras entradas variarán cómo se rehaga este procedmiento, cambiando el dibujo, los niveles, etc.
+
+### 7.6 Modulo top (*top_module.v*)
+
+```verilog
+module top_module (
+    input wire clk,                  // Reloj del sistema
+    input wire reset_n,              // Reset negado (activo bajo)
+    input wire test_n,               // Botón test negado (activo bajo)
+    input wire alimentar_n,          // Botón de alimentar negado
+    input wire jugar_n,              // Botón de jugar negado
+    input wire ultrasonido_ech,      // Señal de echo del sensor de ultrasonido
+    input wire ruido_input,          // Señal de entrada del sensor de ruido (KY-037)
+	 output wire [2:0] nivel_hambre,  // Nivel de hambre (1 a 5)
+    output wire[2:0] nivel_diversion, // Nivel de diversión (1 a 5)
+    output wire [2:0] estado_tamagotchi, // Estado actual del Tamagotchi
+    output wire trigger_ultrasonido, // Señal de trigger para el sensor de ultrasonido
+    output wire rs_lcd,              // Señal RS para la pantalla LCD
+    output wire rw_lcd,              // Señal RW para la pantalla LCD
+    output wire enable_lcd,          // Señal Enable para la pantalla LCD
+    output wire [7:0] data_lcd,      // Datos para la pantalla LCD
+    output wire ruido_detectado,    // Señal de detección de ruido
+    output wire object_detected 
+	 
+);
+
+    
+    wire reset_db, test_db;           // Señales debounced de reset y test
+    
+    
+
+    // Instancia del módulo niveles (hambre/diversión)
+    niveles niveles_inst (
+        .clk(clk),
+        .alimentar(alimentar_n),         // Botón alimentar
+        .jugar(jugar_n),                 // Botón jugar
+        .reset(reset_n),                 // Reset global
+        .test(test_n),                   // Test global
+        .nivel_hambre(nivel_hambre),     // Nivel de hambre
+        .nivel_diversion(nivel_diversion), // Nivel de diversión
+        .reset_debounced(reset_db),      // Reset con antirrebote
+        .test_debounced(test_db)         // Test con antirrebote
+    );
+
+    // Instancia del módulo fms_estados (máquina de estados)
+    fms_estados fms_estados_inst (
+        .clk(clk),
+        .reset_n(reset_n),               // Reset negado
+        .test_n(test_n),                 // Test negado
+        .hambre(nivel_hambre),           // Nivel de hambre (de 'niveles')
+        .diversion(nivel_diversion),     // Nivel de diversión (de 'niveles')
+        .ultrasonido_n(~object_detected),// Sensor de ultrasonido (negado)
+        .ruido_n(~ruido_detectado),      // Sensor de ruido (negado)
+        .estado(estado_tamagotchi)       // Estado del Tamagotchi
+    );
+
+    // Instancia del sensor ultrasonido
+    Ultrasonic_Sensor ultrasonic_sensor_inst (
+        .clk(clk),
+        .ech(ultrasonido_ech),           // Señal "echo" del sensor ultrasonido
+        .trigger_o(trigger_ultrasonido), // Señal de trigger
+        .object_detected(object_detected) // Detección de objeto
+    );
+
+    // Instancia del sensor de ruido
+    sensor_sonido sensor_sonido_inst (
+        .clk(clk),
+        .sensor_input(ruido_input),      // Entrada del sensor KY-037
+        .ruido_detectado(ruido_detectado) // Salida: detección de ruido
+    );
+
+    LCD1602_cust_char lcd_inst (
+        .clk(clk),
+        .reset(reset_n),                 // Reset global
+        .ready_i(1'b1),                  // Asumimos que siempre está listo
+        .control_signal(estado_tamagotchi), // Estado Tamagotchi como señal de control
+		  .nivel_hambre(nivel_hambre),
+		  .nivel_diversion(nivel_diversion),
+        .rs(rs_lcd),                     // Señal RS para el LCD
+        .rw(rw_lcd),                     // Señal RW para el LCD
+        .enable(enable_lcd),             // Señal Enable para el LCD
+        .data(data_lcd) // Datos para el LCD
+    );
+
+endmodule
+```
+Este es el módulo principal, que integra y coordina el funcionamiento de todos los anteriores submódulos antes descritos, para controlar el sistema Tamagochi usando sensores, una pantalla LCD, y lógica secuencial. 
+
+Inicializa todos los módulos según sus configuraciones específicas. Por ejemplo, el módulo de niveles comienza con un nivel de hambre y diversión predefinido, y el módulo LCD1602_cust_char carga los caracteres personalizados y configura la pantalla LCD.
+
+Por otro lado, también da cuenta de los otros módulos de los que recibe información importante en forma de entradas: el módulo Ultrasonic_Sensor nos da la distancia y el dato de cercanía, y el módulo sensor_sonido dirá si hay algún ruido en el entorno.
+
+Con estos datos, se dará ahora lugar a que el módulo "niveles" ajusta los niveles de hambre y diversión según las entradas de los botones (alimentar y jugar) y las demás entradas, y actualizándolos a medida que pasa el tiempo.
+
+Ya teniendo los niveles, se pueden usar como variables de estado en la máquina de estados finito, dedicada en un módulo propio: aquí se cambia el estado del "Tamagotchi" basado en los niveles de hambre, diversión y las entradas de los sensores. 
+
+Dado lo que ocurra en la máquina de estados finita, se procede luego a operar el LCD con su módulo respectivo, para que pueda representar ciertos dibujos del tamagochi dado el estado en que se encuentre: así, se refleja como salida última en la pantalla de visualización LCD.
